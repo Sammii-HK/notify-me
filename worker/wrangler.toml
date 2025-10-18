@@ -1,0 +1,12 @@
+name = "notify-me-cron"
+main = "src/index.ts"
+compatibility_date = "2025-01-15"
+
+[triggers]
+crons = ["0 18 * * 0", "30 7 * * 1"] # Sunday 18:00 UTC, Monday 07:30 UTC
+
+[vars]
+VERCEL_WEEKLY_URL = "https://notify-me.studiosammii.com/api/cron/weekly"
+VERCEL_AUTOSEND_URL = "https://notify-me.studiosammii.com/api/cron/autosend"
+CRON_TOKEN = "superlongrandomstring"
+ACCOUNT_IDS = "acc_main" # CSV for per-account weekly generation

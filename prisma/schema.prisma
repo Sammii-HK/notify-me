@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id             String   @id @default(cuid())
+  label          String
+  openaiApiKey   String
+  promptTemplate String   // includes {{WEEK_START_ISO}}, {{PILLARS}}, {{TZ}}, {{PLATFORMS_JSON}}, {{DO_NOT_REPEAT}}
+  pillars        String   // JSON string array, e.g. ["lunar guidance","tarot",...]
+  timezone       String   @default("Europe/London")
+  platforms      String   @default("[\"x\",\"threads\",\"bluesky\"]") // JSON string
+  postsPerWeek   Int      @default(14)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  postSets       PostSet[]
+  dedupeEntries  Dedupe[]
+}
+
+model PostSet {
+  id          String   @id @default(cuid())
+  accountId   String
+  account     Account  @relation(fields: [accountId], references: [id])
+  weekStart   DateTime // Monday date, start of week in account tz
+  status      String   @default("pending") // pending | sent | failed
+  rawPrompt   String?
+  rawResponse Json?
+  createdAt   DateTime @default(now())
+  posts       Post[]
+}
+
+model Post {
+  id          String   @id @default(cuid())
+  postSetId   String
+  postSet     PostSet  @relation(fields: [postSetId], references: [id])
+  title       String?
+  content     String
+  platforms   String   // JSON string array
+  scheduledAt DateTime
+  mediaUrls   String   @default("[]") // JSON string array
+  approved    Boolean  @default(false)
+  contentHash String   @default("")
+}
+
+model Dedupe {
+  id          String   @id @default(cuid())
+  accountId   String
+  account     Account  @relation(fields: [accountId], references: [id])
+  title       String?
+  contentHash String
+  createdAt   DateTime @default(now())
+}
