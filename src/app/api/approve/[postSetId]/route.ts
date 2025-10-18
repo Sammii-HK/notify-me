@@ -35,11 +35,11 @@ export async function POST(
     if (editedPosts && Array.isArray(editedPosts)) {
       postsToSend = editedPosts;
     } else {
-      postsToSend = postSet.posts.filter((post: any) => post.approved);
+      postsToSend = postSet.posts.filter((post: { postSetId: string; id: string; platforms: string; title: string | null; contentHash: string; content: string; scheduledAt: Date; mediaUrls: string; approved: boolean; }) => post.approved);
     }
 
     if (postsToSend.length === 0) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'No posts selected for approval' 
       }, { status: 400 });
     }
