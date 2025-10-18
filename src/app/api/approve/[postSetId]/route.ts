@@ -112,7 +112,7 @@ export async function POST(
 
     // Add to dedupe
     await db.dedupe.createMany({
-      data: postSet.posts.map((post): { accountId: string; title: string; contentHash: string; } => ({
+      data: postSet.posts.map(post => ({
         accountId: postSet.accountId,
         title: post.title ?? '',
         contentHash: post.contentHash
