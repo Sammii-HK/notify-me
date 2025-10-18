@@ -3,6 +3,46 @@ import db from '@/lib/db';
 import { getSchedulerAdapter } from '@/lib/scheduler';
 import { notifyBoth } from '@/lib/notifications';
 
+// type Post = {
+//   title?: string;
+//   content: string;
+//   scheduledAt: Date;
+//   mediaUrls?: string;
+//   approved: boolean;
+//   platforms: string[];
+//   id: string;
+//   postSetId: string;
+//   accountId: string;
+//   postSet: PostSet;
+// };
+
+interface Post {
+  title?: string;
+  content: string;
+  scheduledAt: Date;
+  mediaUrls?: string;
+  approved: boolean;
+  platforms: string[];
+  id: string;
+  postSetId: string;
+  accountId: string;
+  postSet: PostSet;
+};
+
+type PostSet = {
+  id: string;
+  weekStart: Date;
+  status: string;
+  account: Account;
+  posts: Post[];
+};
+
+type Account = {
+  id: string;
+  label: string;
+  platforms: string;
+};
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ postSetId: string }> }
@@ -35,7 +75,7 @@ export async function POST(
     if (editedPosts && Array.isArray(editedPosts)) {
       postsToSend = editedPosts;
     } else {
-      postsToSend = postSet.posts.filter((post: { postSetId: string; id: string; platforms: string; title: string | null; contentHash: string; content: string; scheduledAt: Date; mediaUrls: string; approved: boolean; }) => post.approved);
+      postsToSend = postSet.posts.filter((post: { approved: boolean; }) => post.approved);
     }
 
     if (postsToSend.length === 0) {
@@ -45,12 +85,7 @@ export async function POST(
     }
 
     // Prepare posts for scheduler
-    const schedulerPosts = postsToSend.map((post: {
-      title?: string;
-      content: string;
-      scheduledAt: Date;
-      mediaUrls?: string;
-    }) => ({
+    const schedulerPosts = postsToSend.map((post: Post) => ({
       title: post.title ?? '',
       content: post.content,
       platforms: JSON.parse(postSet.account.platforms),
@@ -77,7 +112,7 @@ export async function POST(
 
     // Add to dedupe
     await db.dedupe.createMany({
-      data: postSet.posts.map(post => ({
+      data: postSet.posts.map((post): { accountId: string; title: string; contentHash: string; } => ({
         accountId: postSet.accountId,
         title: post.title ?? '',
         contentHash: post.contentHash
