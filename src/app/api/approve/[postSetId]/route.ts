@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { getSchedulerAdapter } from '@/lib/scheduler';
 import { notifyBoth } from '@/lib/notifications';
-import { Post } from '@prisma/client';
 
 export async function POST(
   request: NextRequest,
@@ -36,7 +35,7 @@ export async function POST(
     if (editedPosts && Array.isArray(editedPosts)) {
       postsToSend = editedPosts;
     } else {
-      postsToSend = postSet.posts.filter((post: Post) => post.approved);
+      postsToSend = postSet.posts.filter((post: any) => post.approved);
     }
 
     if (postsToSend.length === 0) {
