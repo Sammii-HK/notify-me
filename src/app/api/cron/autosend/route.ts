@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     for (const postSet of postSets) {
       try {
         // Prepare posts for scheduler
-        const schedulerPosts = postSet.posts.map(post => ({
+        const schedulerPosts = postSet.posts.map((post: PostForDedupe) => ({
           title: post.title ?? '',
           content: post.content,
           platforms: JSON.parse(postSet.account.platforms),
