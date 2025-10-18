@@ -38,6 +38,8 @@ export async function POST(request: NextRequest) {
     const scheduler = getSchedulerAdapter();
     const results = [];
 
+    type PostForDedupe = typeof postSets[number]['posts'][number];
+
     for (const postSet of postSets) {
       try {
         // Prepare posts for scheduler
@@ -61,7 +63,7 @@ export async function POST(request: NextRequest) {
 
           // Add to dedupe
           await db.dedupe.createMany({
-            data: postSet.posts.map(post => ({
+            data: postSet.posts.map((post: PostForDedupe) => ({
               accountId: postSet.accountId,
               title: post.title ?? '',
               contentHash: post.contentHash
