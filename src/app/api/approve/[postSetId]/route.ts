@@ -110,9 +110,11 @@ export async function POST(
       data: { status: 'sent' }
     });
 
+    type PostForDedupe = typeof postSet.posts[number];
+
     // Add to dedupe
     await db.dedupe.createMany({
-      data: postSet.posts.map(post => ({
+      data: postSet.posts.map((post: PostForDedupe) => ({
         accountId: postSet.accountId,
         title: post.title ?? '',
         contentHash: post.contentHash
