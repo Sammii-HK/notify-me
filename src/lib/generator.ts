@@ -1,8 +1,27 @@
 import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
 import { nextMondayISODate } from './time';
+import { createOpenAI } from '@ai-sdk/openai';
+import { generateObject, streamObject } from 'ai';
+import { z } from 'zod';
 
 const MODEL = process.env.OPENAI_DEFAULT_MODEL || 'gpt-4o';
+
+// Zod schemas for structured output validation
+const PostSchema = z.object({
+  title: z.string().optional(),
+  content: z.string().min(1, 'Content cannot be empty'),
+  platforms: z.array(z.string()).min(1, 'At least one platform required'),
+  scheduledDate: z.string().datetime('Invalid date format'),
+  mediaUrls: z.array(z.string().url('Invalid URL')).optional().default([])
+});
+
+const PostsResponseSchema = z.object({
+  posts: z.array(PostSchema).min(1, 'At least one post required')
+});
+
+export type Post = z.infer<typeof PostSchema>;
+export type PostsResponse = z.infer<typeof PostsResponseSchema>;
 
 /**
  * Interpolate template variables in a prompt
@@ -16,40 +35,96 @@ export function interpolatePrompt(template: string, vars: Record<string, string>
 }
 
 /**
- * Call OpenAI API with a prompt and return parsed JSON response
+ * Generate posts using AI SDK with structured output and validation
  */
-export async function fetchOpenAI(apiKey: string, prompt: string): Promise<{ posts: Array<{ title?: string; content: string; platforms: string[]; scheduledDate: string; mediaUrls?: string[] }> }> {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: MODEL,
+export async function generatePosts(apiKey: string, prompt: string): Promise<PostsResponse> {
+  try {
+    const openaiProvider = createOpenAI({
+      apiKey,
+    });
+    
+    const result = await generateObject({
+      model: openaiProvider(MODEL),
+      schema: PostsResponseSchema,
+      prompt: `You are a careful marketing copy generator. Generate social media posts based on the following requirements:
+
+${prompt}
+
+Important guidelines:
+- Ensure all dates are in ISO 8601 format (YYYY-MM-DDTHH:mm:ss.sssZ)
+- Content should be engaging and platform-appropriate
+- Respect the specified platforms for each post
+- Follow the content pillars and avoid repeating recent topics
+- Generate exactly the requested number of posts`,
       temperature: 0.7,
-      messages: [
-        { 
-          role: 'system', 
-          content: 'You are a careful marketing copy generator. Return only valid JSON.' 
-        },
-        { role: 'user', content: prompt }
-      ]
-    })
+      maxRetries: 3, // Built-in retry mechanism
+    });
+
+    // Validate the result
+    const validatedData = PostsResponseSchema.parse(result.object);
+    
+    return validatedData;
+  } catch (error) {
+    console.error('AI generation error:', error);
+    
+    if (error instanceof z.ZodError) {
+      throw new Error(`Invalid response format: ${error.issues.map((e: z.ZodIssue) => `${e.path.join('.')}: ${e.message}`).join(', ')}`);
+    }
+    
+    if (error instanceof Error) {
+      throw new Error(`AI generation failed: ${error.message}`);
+    }
+    
+    throw new Error('Unknown error during AI generation');
+  }
+}
+
+/**
+ * Generate posts with streaming for better UX - returns an async iterator
+ */
+export async function* generatePostsStream(apiKey: string, prompt: string) {
+  const openaiProvider = createOpenAI({
+    apiKey,
+  });
+  
+  const result = streamObject({
+    model: openaiProvider(MODEL),
+    schema: PostsResponseSchema,
+    prompt: `You are a careful marketing copy generator. Generate social media posts based on the following requirements:
+
+${prompt}
+
+Important guidelines:
+- Ensure all dates are in ISO 8601 format (YYYY-MM-DDTHH:mm:ss.sssZ)
+- Content should be engaging and platform-appropriate
+- Respect the specified platforms for each post
+- Follow the content pillars and avoid repeating recent topics
+- Generate exactly the requested number of posts`,
+    temperature: 0.7,
+    maxRetries: 3,
   });
 
-  if (!response.ok) {
-    throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+  // Stream partial results
+  for await (const partialObject of result.partialObjectStream) {
+    yield {
+      type: 'partial' as const,
+      data: partialObject,
+    };
   }
 
-  const json = await response.json();
-  const content = json?.choices?.[0]?.message?.content || '{}';
-  
+  // Return final validated result
   try {
-    return JSON.parse(content);
-  } catch {
-    console.error('Failed to parse OpenAI response:', content);
-    throw new Error('Invalid JSON response from OpenAI');
+    const finalObject = await result.object;
+    const validatedData = PostsResponseSchema.parse(finalObject);
+    yield {
+      type: 'complete' as const,
+      data: validatedData,
+    };
+  } catch (error) {
+    yield {
+      type: 'error' as const,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
   }
 }
 
@@ -86,7 +161,7 @@ export async function savePostSet(
   account: { id: string }, 
   weekStartISO: string, 
   prompt: string, 
-  response: { posts: Array<{ title?: string; content: string; platforms: string[]; scheduledDate: string; mediaUrls?: string[] }> }
+  response: PostsResponse
 ) {
   const postSet = await db.postSet.create({
     data: {
@@ -154,7 +229,7 @@ export async function generatePostsForAccount(db: PrismaClient, accountId: strin
     DO_NOT_REPEAT: doNotRepeat
   });
 
-  const response = await fetchOpenAI(account.openaiApiKey, prompt);
+  const response = await generatePosts(account.openaiApiKey, prompt);
   const postSet = await savePostSet(db, account, weekStartISO, prompt, response);
 
   return postSet;
