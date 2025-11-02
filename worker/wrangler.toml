@@ -3,10 +3,11 @@ main = "src/index.ts"
 compatibility_date = "2025-01-15"
 
 [triggers]
-crons = ["0 18 * * 0", "30 7 * * 1"] # Sunday 18:00 UTC, Monday 07:30 UTC
+crons = ["0 9 * * 1", "0 10,18 * * *"] # Monday 9 AM UTC (weekly generation), Daily 10 AM & 6 PM UTC (autosend)
 
 [vars]
-VERCEL_WEEKLY_URL = "https://notify-me.studiosammii.com/api/cron/weekly"
-VERCEL_AUTOSEND_URL = "https://notify-me.studiosammii.com/api/cron/autosend"
-CRON_TOKEN = "superlongrandomstring"
+VERCEL_WEEKLY_URL = "https://notify-me-chi.vercel.app/api/cron/weekly"
+VERCEL_AUTOSEND_URL = "https://notify-me-chi.vercel.app/api/cron/autosend"
 ACCOUNT_IDS = "acc_main" # CSV for per-account weekly generation
+
+# CRON_TOKEN is stored as a secret (not in git)
