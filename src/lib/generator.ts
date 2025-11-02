@@ -7,17 +7,17 @@ import { z } from 'zod';
 
 const MODEL = process.env.OPENAI_DEFAULT_MODEL || 'gpt-4o-mini';
 
-// Zod schemas for structured output validation - relaxed for better compatibility
+// Zod schemas for structured output validation - simplified for reliability
 const PostSchema = z.object({
+  content: z.string(),
+  platforms: z.array(z.string()),
+  scheduledDate: z.string(),
   title: z.string().optional(),
-  content: z.string().min(1, 'Content cannot be empty'),
-  platforms: z.array(z.string()).min(1, 'At least one platform required'),
-  scheduledDate: z.string().min(1, 'Date required'), // More flexible date validation
-  mediaUrls: z.array(z.string()).optional().default([]) // More flexible URL validation
+  mediaUrls: z.array(z.string()).optional()
 });
 
 const PostsResponseSchema = z.object({
-  posts: z.array(PostSchema).min(1, 'At least one post required')
+  posts: z.array(PostSchema)
 });
 
 export type Post = z.infer<typeof PostSchema>;
