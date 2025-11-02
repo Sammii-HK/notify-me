@@ -59,8 +59,8 @@ export async function generatePosts(apiKey: string, prompt: string): Promise<Pos
     console.error('AI generation error:', error);
     
     // Log the raw response for debugging
-    if (error.cause && error.cause.response) {
-      console.error('Raw AI response:', JSON.stringify(error.cause.response, null, 2));
+    if (error instanceof Error && 'cause' in error && error.cause && typeof error.cause === 'object' && 'response' in error.cause) {
+      console.error('Raw AI response:', JSON.stringify((error.cause as { response: unknown }).response, null, 2));
     }
     
     if (error instanceof z.ZodError) {

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // In a real app, you'd store subscriptions in your database
 // For now, we'll use a simple in-memory store (this will reset on deployment)
-const subscriptions: any[] = [];
+const subscriptions: unknown[] = [];
 
 export async function POST(request: NextRequest) {
   try {
