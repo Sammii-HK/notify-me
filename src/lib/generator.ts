@@ -46,16 +46,7 @@ export async function generatePosts(apiKey: string, prompt: string): Promise<Pos
     const result = await generateObject({
       model: openaiProvider(MODEL),
       schema: PostsResponseSchema,
-      prompt: `You are a careful marketing copy generator. Generate social media posts based on the following requirements:
-
-${prompt}
-
-Important guidelines:
-- Ensure all dates are in ISO 8601 format (YYYY-MM-DDTHH:mm:ss.sssZ)
-- Content should be engaging and platform-appropriate
-- Respect the specified platforms for each post
-- Follow the content pillars and avoid repeating recent topics
-- Generate exactly the requested number of posts`,
+      prompt: prompt,
       temperature: 0.7,
       maxRetries: 3, // Built-in retry mechanism
     });
@@ -90,16 +81,7 @@ export async function* generatePostsStream(apiKey: string, prompt: string) {
   const result = streamObject({
     model: openaiProvider(MODEL),
     schema: PostsResponseSchema,
-    prompt: `You are a careful marketing copy generator. Generate social media posts based on the following requirements:
-
-${prompt}
-
-Important guidelines:
-- Ensure all dates are in ISO 8601 format (YYYY-MM-DDTHH:mm:ss.sssZ)
-- Content should be engaging and platform-appropriate
-- Respect the specified platforms for each post
-- Follow the content pillars and avoid repeating recent topics
-- Generate exactly the requested number of posts`,
+    prompt: prompt,
     temperature: 0.7,
     maxRetries: 3,
   });
