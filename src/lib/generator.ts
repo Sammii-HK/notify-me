@@ -159,20 +159,20 @@ export async function buildBrandContext(db: PrismaClient, accountId: string): Pr
   let context = '';
   
   // Parse JSON fields safely
-  const parseJsonField = (field: string | null): any => {
+  const parseJsonField = (field: string | null): Record<string, unknown> | null => {
     if (!field) return null;
     try {
-      return JSON.parse(field);
+      return JSON.parse(field) as Record<string, unknown>;
     } catch {
       return null;
     }
   };
 
-  const brandVoice = parseJsonField((account as any).brandVoice);
-  const targetAudience = parseJsonField((account as any).targetAudience);
-  const brandValues = parseJsonField((account as any).brandValues);
-  const contentGuidelines = parseJsonField((account as any).contentGuidelines);
-  const examplePosts = parseJsonField((account as any).examplePosts);
+  const brandVoice = parseJsonField((account as Record<string, unknown>).brandVoice as string | null);
+  const targetAudience = parseJsonField((account as Record<string, unknown>).targetAudience as string | null);
+  const brandValues = parseJsonField((account as Record<string, unknown>).brandValues as string | null);
+  const contentGuidelines = parseJsonField((account as Record<string, unknown>).contentGuidelines as string | null);
+  const examplePosts = parseJsonField((account as Record<string, unknown>).examplePosts as string | null);
 
   if (brandVoice) {
     context += `\nBRAND VOICE:\n`;
@@ -319,7 +319,7 @@ export async function generatePostsForAccount(db: PrismaClient, accountId: strin
     fullContext += `\n\nRECENT CONTENT TO AVOID REPEATING:\n${doNotRepeat}`;
   }
   
-  const truncatedContext = truncateContext(fullContext, (account as any).contextTokenLimit || 8000);
+  const truncatedContext = truncateContext(fullContext, (account as Record<string, unknown>).contextTokenLimit as number || 8000);
   
   const prompt = interpolatePrompt(account.promptTemplate, {
     WEEK_START_ISO: weekStartISO,

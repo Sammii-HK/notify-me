@@ -54,38 +54,40 @@ async function main() {
       postsPerWeek: 10, // Conservative start
       active: true,
       
-      // Enhanced brand context
-      brandVoice: JSON.stringify({
-        tone: 'Mystical yet approachable',
-        personality: 'Wise, nurturing, authentic',
-        styleGuidelines: 'Use celestial metaphors, avoid overly technical language, include emojis sparingly but meaningfully'
-      }),
-      
-      targetAudience: JSON.stringify({
-        demographics: 'Women 25-45, spiritually curious, seeking guidance',
-        interests: 'Astrology, self-development, mindfulness, tarot',
-        painPoints: 'Feeling disconnected from purpose, seeking direction in life decisions'
-      }),
-      
-      brandValues: JSON.stringify({
-        coreValues: 'Authenticity, empowerment, cosmic connection',
-        mission: 'Help people navigate life through practical cosmic wisdom',
-        usp: 'Accessible astrology for everyday decisions and personal growth'
-      }),
-      
-      contentGuidelines: JSON.stringify({
-        dos: 'Include actionable insights, reference current planetary events, use inclusive language, provide hope and empowerment',
-        donts: 'Make absolute predictions, use fear-based language, overpromise results, be overly mystical without substance',
-        hashtags: '#astrology #cosmicwisdom #lunarguide #spiritualgrowth #mindfuliving'
-      }),
-      
-      examplePosts: JSON.stringify([
-        'The New Moon in Capricorn invites you to plant seeds for your biggest dreams. What intentions are you setting this lunar cycle? 🌑✨ #newmoon #intentions',
-        'Mercury retrograde isn\'t here to ruin your life—it\'s here to help you slow down and reflect. What area of your life needs your gentle attention right now? 💫',
-        'Your birth chart is like a cosmic GPS. It doesn\'t determine your destination, but it shows you the best routes to get there. Trust your inner navigation. 🗺️⭐'
-      ]),
-      
-      contextTokenLimit: 6000 // Optimized for cost
+      // Enhanced brand context (will be added after migration)
+      ...(process.env.NODE_ENV === 'production' ? {
+        brandVoice: JSON.stringify({
+          tone: 'Mystical yet approachable',
+          personality: 'Wise, nurturing, authentic',
+          styleGuidelines: 'Use celestial metaphors, avoid overly technical language, include emojis sparingly but meaningfully'
+        }),
+        
+        targetAudience: JSON.stringify({
+          demographics: 'Women 25-45, spiritually curious, seeking guidance',
+          interests: 'Astrology, self-development, mindfulness, tarot',
+          painPoints: 'Feeling disconnected from purpose, seeking direction in life decisions'
+        }),
+        
+        brandValues: JSON.stringify({
+          coreValues: 'Authenticity, empowerment, cosmic connection',
+          mission: 'Help people navigate life through practical cosmic wisdom',
+          usp: 'Accessible astrology for everyday decisions and personal growth'
+        }),
+        
+        contentGuidelines: JSON.stringify({
+          dos: 'Include actionable insights, reference current planetary events, use inclusive language, provide hope and empowerment',
+          donts: 'Make absolute predictions, use fear-based language, overpromise results, be overly mystical without substance',
+          hashtags: '#astrology #cosmicwisdom #lunarguide #spiritualgrowth #mindfuliving'
+        }),
+        
+        examplePosts: JSON.stringify([
+          'The New Moon in Capricorn invites you to plant seeds for your biggest dreams. What intentions are you setting this lunar cycle? 🌑✨ #newmoon #intentions',
+          'Mercury retrograde isn\'t here to ruin your life—it\'s here to help you slow down and reflect. What area of your life needs your gentle attention right now? 💫',
+          'Your birth chart is like a cosmic GPS. It doesn\'t determine your destination, but it shows you the best routes to get there. Trust your inner navigation. 🗺️⭐'
+        ]),
+        
+        contextTokenLimit: 6000
+      } : {})
     }
   });
 
@@ -111,37 +113,40 @@ async function main() {
       postsPerWeek: 7,
       active: false, // Disabled by default
       
-      brandVoice: JSON.stringify({
-        tone: 'Professional yet inspiring',
-        personality: 'Motivational, data-driven, action-oriented',
-        styleGuidelines: 'Use business metaphors, include actionable tips, professional but approachable language'
-      }),
-      
-      targetAudience: JSON.stringify({
-        demographics: 'Entrepreneurs and business professionals 30-50',
-        interests: 'Business growth, productivity, leadership, innovation',
-        painPoints: 'Time management, scaling challenges, team leadership'
-      }),
-      
-      brandValues: JSON.stringify({
-        coreValues: 'Excellence, innovation, sustainable growth',
-        mission: 'Empower entrepreneurs to build successful, meaningful businesses',
-        usp: 'Practical business wisdom backed by real experience'
-      }),
-      
-      contentGuidelines: JSON.stringify({
-        dos: 'Share actionable insights, use data when possible, tell success stories, provide frameworks',
-        donts: 'Make unrealistic promises, use jargon without explanation, ignore work-life balance',
-        hashtags: '#entrepreneurship #leadership #productivity #businessgrowth #success'
-      }),
-      
-      examplePosts: JSON.stringify([
-        'The best leaders don\'t just give feedback—they create a culture where feedback flows freely in all directions. How are you fostering open communication in your team? 💼',
-        'Your biggest competitor isn\'t another company. It\'s your own complacency. What\'s one thing you\'re doing differently this quarter? 🚀',
-        'Revenue is vanity, profit is sanity, but cash flow is reality. Which metric are you tracking most closely right now? 📊'
-      ]),
-      
-      contextTokenLimit: 5000 // Slightly lower for business content
+      // Enhanced brand context (will be added after migration)
+      ...(process.env.NODE_ENV === 'production' ? {
+        brandVoice: JSON.stringify({
+          tone: 'Professional yet inspiring',
+          personality: 'Motivational, data-driven, action-oriented',
+          styleGuidelines: 'Use business metaphors, include actionable tips, professional but approachable language'
+        }),
+        
+        targetAudience: JSON.stringify({
+          demographics: 'Entrepreneurs and business professionals 30-50',
+          interests: 'Business growth, productivity, leadership, innovation',
+          painPoints: 'Time management, scaling challenges, team leadership'
+        }),
+        
+        brandValues: JSON.stringify({
+          coreValues: 'Excellence, innovation, sustainable growth',
+          mission: 'Empower entrepreneurs to build successful, meaningful businesses',
+          usp: 'Practical business wisdom backed by real experience'
+        }),
+        
+        contentGuidelines: JSON.stringify({
+          dos: 'Share actionable insights, use data when possible, tell success stories, provide frameworks',
+          donts: 'Make unrealistic promises, use jargon without explanation, ignore work-life balance',
+          hashtags: '#entrepreneurship #leadership #productivity #businessgrowth #success'
+        }),
+        
+        examplePosts: JSON.stringify([
+          'The best leaders don\'t just give feedback—they create a culture where feedback flows freely in all directions. How are you fostering open communication in your team? 💼',
+          'Your biggest competitor isn\'t another company. It\'s your own complacency. What\'s one thing you\'re doing differently this quarter? 🚀',
+          'Revenue is vanity, profit is sanity, but cash flow is reality. Which metric are you tracking most closely right now? 📊'
+        ]),
+        
+        contextTokenLimit: 5000
+      } : {})
     }
   });
 
