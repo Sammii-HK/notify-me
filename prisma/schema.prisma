@@ -17,6 +17,19 @@ model Account {
   platforms      String   @default("[\"x\",\"threads\",\"bluesky\"]") // JSON string
   postsPerWeek   Int      @default(14)
   active         Boolean  @default(true)
+  
+  // Enhanced brand context fields
+  brandVoice     String?  // JSON: tone, personality, style guidelines
+  targetAudience String?  // JSON: demographics, interests, pain points
+  brandValues    String?  // JSON: core values, mission, unique selling points
+  contentGuidelines String? // JSON: dos/don'ts, hashtag strategy, content types
+  examplePosts   String?  // JSON: array of high-performing posts for reference
+  
+  // Context limits and usage tracking
+  contextTokenLimit Int @default(8000) // Max tokens for context
+  monthlyGenCount   Int @default(0)    // Track usage for cost monitoring
+  lastResetDate     DateTime @default(now())
+  
   createdAt      DateTime @default(now())
   postSets       PostSet[]
   dedupeEntries  Dedupe[]

@@ -43,7 +43,7 @@ Required variables:
 - \`APP_URL\`: Your deployed app URL (for notifications)
 
 Optional variables:
-- \`OPENAI_DEFAULT_MODEL\`: OpenAI model to use (default: gpt-4o)
+- \`OPENAI_DEFAULT_MODEL\`: OpenAI model to use (default: gpt-4o-mini for cost optimization)
 - \`DISCORD_WEBHOOK\`: Discord webhook URL for notifications
 - \`PUSHOVER_TOKEN\` & \`PUSHOVER_USER\`: Pushover credentials
 

@@ -5,7 +5,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { generateObject, streamObject } from 'ai';
 import { z } from 'zod';
 
-const MODEL = process.env.OPENAI_DEFAULT_MODEL || 'gpt-4o';
+const MODEL = process.env.OPENAI_DEFAULT_MODEL || 'gpt-4o-mini';
 
 // Zod schemas for structured output validation
 const PostSchema = z.object({
@@ -147,6 +147,98 @@ export async function getDoNotRepeat(db: PrismaClient, accountId: string): Promi
 }
 
 /**
+ * Build comprehensive brand context for AI generation
+ */
+export async function buildBrandContext(db: PrismaClient, accountId: string): Promise<string> {
+  const account = await db.account.findUnique({
+    where: { id: accountId }
+  });
+
+  if (!account) return '';
+
+  let context = '';
+  
+  // Parse JSON fields safely
+  const parseJsonField = (field: string | null): any => {
+    if (!field) return null;
+    try {
+      return JSON.parse(field);
+    } catch {
+      return null;
+    }
+  };
+
+  const brandVoice = parseJsonField((account as any).brandVoice);
+  const targetAudience = parseJsonField((account as any).targetAudience);
+  const brandValues = parseJsonField((account as any).brandValues);
+  const contentGuidelines = parseJsonField((account as any).contentGuidelines);
+  const examplePosts = parseJsonField((account as any).examplePosts);
+
+  if (brandVoice) {
+    context += `\nBRAND VOICE:\n`;
+    context += `Tone: ${brandVoice.tone || 'Professional'}\n`;
+    context += `Personality: ${brandVoice.personality || 'Friendly'}\n`;
+    if (brandVoice.styleGuidelines) {
+      context += `Style Guidelines: ${brandVoice.styleGuidelines}\n`;
+    }
+  }
+
+  if (targetAudience) {
+    context += `\nTARGET AUDIENCE:\n`;
+    context += `Demographics: ${targetAudience.demographics || 'General audience'}\n`;
+    context += `Interests: ${targetAudience.interests || 'Various'}\n`;
+    if (targetAudience.painPoints) {
+      context += `Pain Points: ${targetAudience.painPoints}\n`;
+    }
+  }
+
+  if (brandValues) {
+    context += `\nBRAND VALUES:\n`;
+    if (brandValues.coreValues) context += `Core Values: ${brandValues.coreValues}\n`;
+    if (brandValues.mission) context += `Mission: ${brandValues.mission}\n`;
+    if (brandValues.usp) context += `Unique Selling Points: ${brandValues.usp}\n`;
+  }
+
+  if (contentGuidelines) {
+    context += `\nCONTENT GUIDELINES:\n`;
+    if (contentGuidelines.dos) context += `DO: ${contentGuidelines.dos}\n`;
+    if (contentGuidelines.donts) context += `DON'T: ${contentGuidelines.donts}\n`;
+    if (contentGuidelines.hashtags) context += `Hashtag Strategy: ${contentGuidelines.hashtags}\n`;
+  }
+
+  if (examplePosts && Array.isArray(examplePosts) && examplePosts.length > 0) {
+    context += `\nHIGH-PERFORMING POST EXAMPLES:\n`;
+    examplePosts.slice(0, 3).forEach((post, i) => {
+      context += `${i + 1}. ${post}\n`;
+    });
+  }
+
+  return context.trim();
+}
+
+/**
+ * Count tokens approximately (rough estimate: ~4 chars per token)
+ */
+export function estimateTokens(text: string): number {
+  return Math.ceil(text.length / 4);
+}
+
+/**
+ * Truncate context to fit within token limits
+ */
+export function truncateContext(context: string, maxTokens: number): string {
+  const estimatedTokens = estimateTokens(context);
+  
+  if (estimatedTokens <= maxTokens) {
+    return context;
+  }
+  
+  // Rough truncation - keep first 80% of allowed characters
+  const maxChars = maxTokens * 4 * 0.8;
+  return context.substring(0, maxChars) + '\n\n[Context truncated to fit token limit]';
+}
+
+/**
  * Create a hash of content for deduplication
  */
 export function hashContent(content: string): string {
@@ -219,6 +311,15 @@ export async function generatePostsForAccount(db: PrismaClient, accountId: strin
   }
 
   const doNotRepeat = await getDoNotRepeat(db, account.id);
+  const brandContext = await buildBrandContext(db, account.id);
+  
+  // Build comprehensive context within token limits
+  let fullContext = brandContext;
+  if (doNotRepeat !== 'None') {
+    fullContext += `\n\nRECENT CONTENT TO AVOID REPEATING:\n${doNotRepeat}`;
+  }
+  
+  const truncatedContext = truncateContext(fullContext, (account as any).contextTokenLimit || 8000);
   
   const prompt = interpolatePrompt(account.promptTemplate, {
     WEEK_START_ISO: weekStartISO,
@@ -226,7 +327,8 @@ export async function generatePostsForAccount(db: PrismaClient, accountId: strin
     PLATFORMS_JSON: account.platforms,
     PILLARS: account.pillars,
     POSTS_PER_WEEK: account.postsPerWeek.toString(),
-    DO_NOT_REPEAT: doNotRepeat
+    DO_NOT_REPEAT: doNotRepeat,
+    BRAND_CONTEXT: truncatedContext
   });
 
   const response = await generatePosts(account.openaiApiKey, prompt);
