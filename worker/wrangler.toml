@@ -3,7 +3,7 @@ main = "src/index.ts"
 compatibility_date = "2025-01-15"
 
 [triggers]
-crons = ["0 9 * * 1", "0 10,18 * * *"] # Monday 9 AM UTC (weekly generation), Daily 10 AM & 6 PM UTC (autosend)
+crons = ["0 9 * * 1", "0 8 * * 1"] # Monday 9 AM UTC (weekly generation for NEXT week), Monday 8 AM UTC (autosend approved posts)
 
 [vars]
 VERCEL_WEEKLY_URL = "https://notify-me-chi.vercel.app/api/cron/weekly"

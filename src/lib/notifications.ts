@@ -61,9 +61,35 @@ export async function notifyPushover(title: string, message: string): Promise<vo
 /**
  * Send notifications to both Discord and Pushover
  */
-export async function notifyBoth(title: string, message: string): Promise<void> {
+export async function notifyBoth(title: string, message: string, reviewUrl?: string): Promise<void> {
   await Promise.all([
     notifyDiscord(`**${title}**\n${message}`),
-    notifyPushover(title, message)
+    notifyPushover(title, message),
+    notifyPushSubscribers(title, message, reviewUrl)
   ]);
+}
+
+/**
+ * Send push notifications to all subscribers
+ */
+export async function notifyPushSubscribers(
+  title: string, 
+  message: string, 
+  reviewUrl?: string
+): Promise<void> {
+  try {
+    // In a real app, you'd fetch subscriptions from database
+    // For now, we'll make a request to trigger notifications
+    const response = await fetch(`${process.env.APP_URL || 'http://localhost:3000'}/api/push/notify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, message, reviewUrl })
+    });
+    
+    if (!response.ok) {
+      console.error('Failed to send push notifications');
+    }
+  } catch (error) {
+    console.error('Push notification error:', error);
+  }
 }

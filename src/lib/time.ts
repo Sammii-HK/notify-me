@@ -3,13 +3,16 @@ import { DateTime } from 'luxon';
 /**
  * Get the next Monday's ISO date for a given timezone
  * If today is Monday, returns next Monday
+ * @param tz - Timezone string
+ * @param weeksAhead - Number of additional weeks ahead (default 0)
  */
-export function nextMondayISODate(tz: string): string {
+export function nextMondayISODate(tz: string, weeksAhead: number = 0): string {
   const now = DateTime.now().setZone(tz);
   const mondayThisWeek = now.startOf('week'); // Monday for ISO week
   const isMonToday = now.weekday === 1;
   const nextMonday = isMonToday ? mondayThisWeek.plus({ weeks: 1 }) : mondayThisWeek;
-  return nextMonday.toISODate()!; // YYYY-MM-DD
+  const targetMonday = nextMonday.plus({ weeks: weeksAhead });
+  return targetMonday.toISODate()!; // YYYY-MM-DD
 }
 
 /**

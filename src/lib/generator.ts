@@ -296,7 +296,7 @@ export async function generatePostsForAccount(db: PrismaClient, accountId: strin
   }
 
   const tz = account.timezone || 'Europe/London';
-  const weekStartISO = nextMondayISODate(tz);
+  const weekStartISO = nextMondayISODate(tz, 1); // Generate posts for NEXT week (1 week ahead)
 
   // Check if we already have posts for this week
   const existing = await db.postSet.findFirst({
