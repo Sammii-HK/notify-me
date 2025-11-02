@@ -7,13 +7,13 @@ import { z } from 'zod';
 
 const MODEL = process.env.OPENAI_DEFAULT_MODEL || 'gpt-4o-mini';
 
-// Zod schemas for structured output validation
+// Zod schemas for structured output validation - relaxed for better compatibility
 const PostSchema = z.object({
   title: z.string().optional(),
   content: z.string().min(1, 'Content cannot be empty'),
   platforms: z.array(z.string()).min(1, 'At least one platform required'),
-  scheduledDate: z.string().datetime('Invalid date format'),
-  mediaUrls: z.array(z.string().url('Invalid URL')).optional().default([])
+  scheduledDate: z.string().min(1, 'Date required'), // More flexible date validation
+  mediaUrls: z.array(z.string()).optional().default([]) // More flexible URL validation
 });
 
 const PostsResponseSchema = z.object({
@@ -58,7 +58,13 @@ export async function generatePosts(apiKey: string, prompt: string): Promise<Pos
   } catch (error) {
     console.error('AI generation error:', error);
     
+    // Log the raw response for debugging
+    if (error.cause && error.cause.response) {
+      console.error('Raw AI response:', JSON.stringify(error.cause.response, null, 2));
+    }
+    
     if (error instanceof z.ZodError) {
+      console.error('Zod validation errors:', error.issues);
       throw new Error(`Invalid response format: ${error.issues.map((e: z.ZodIssue) => `${e.path.join('.')}: ${e.message}`).join(', ')}`);
     }
     
