@@ -4,16 +4,19 @@ import { nextMondayISODate } from './time';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateObject, streamObject } from 'ai';
 import { z } from 'zod';
+import { distributePlatforms, getAllPlatformGuidelines } from './platform-config';
 
 const MODEL = process.env.OPENAI_DEFAULT_MODEL || 'gpt-4o-mini';
 
-// Zod schemas for structured output validation - simplified for reliability
+// Platform-specific post schema for better content targeting
 const PostSchema = z.object({
   content: z.string(),
-  platforms: z.array(z.string()),
+  platform: z.string(), // Single platform per post for better targeting
   scheduledDate: z.string(),
   title: z.string().optional(),
-  mediaUrls: z.array(z.string()).optional()
+  mediaUrls: z.array(z.string()).optional(),
+  hashtags: z.array(z.string()).optional(),
+  characterCount: z.number().optional()
 });
 
 const PostsResponseSchema = z.object({
@@ -161,6 +164,11 @@ export async function buildBrandContext(db: PrismaClient, accountId: string): Pr
   const brandValues = parseJsonField((account as Record<string, unknown>).brandValues as string | null);
   const contentGuidelines = parseJsonField((account as Record<string, unknown>).contentGuidelines as string | null);
   const examplePosts = parseJsonField((account as Record<string, unknown>).examplePosts as string | null);
+  const platformSettings = parseJsonField((account as Record<string, unknown>).platformSettings as string | null);
+  
+  // Get platform-specific guidelines
+  const platforms = JSON.parse(account.platforms);
+  const platformGuidelines = getAllPlatformGuidelines(platforms);
 
   if (brandVoice) {
     context += `\nBRAND VOICE:\n`;
@@ -199,6 +207,15 @@ export async function buildBrandContext(db: PrismaClient, accountId: string): Pr
     examplePosts.slice(0, 3).forEach((post, i) => {
       context += `${i + 1}. ${post}\n`;
     });
+  }
+  
+  // Add platform-specific guidelines
+  if (platformGuidelines) {
+    context += `\nPLATFORM-SPECIFIC GUIDELINES:\n${platformGuidelines}`;
+  }
+  
+  if (platformSettings) {
+    context += `\nPLATFORM SETTINGS:\n${JSON.stringify(platformSettings, null, 2)}\n`;
   }
 
   return context.trim();
