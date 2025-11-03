@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
-import { getSchedulerAdapter } from '@/lib/scheduler';
+import { sendWithFallback } from '@/lib/scheduler';
 import { notifyBoth } from '@/lib/notifications';
 
 // type Post = {
@@ -93,15 +93,27 @@ export async function POST(
       mediaUrls: JSON.parse(post.mediaUrls ?? '[]')
     }));
 
-    // Send to scheduler
-    const scheduler = getSchedulerAdapter();
-    const result = await scheduler.sendBulk(schedulerPosts);
+    // Send with fallback system
+    const result = await sendWithFallback(schedulerPosts);
 
-    if (!result.ok) {
+    if (!result.success) {
+      // If all schedulers failed, provide export options
+      await notifyBoth(
+        'Scheduler Unavailable - Export Ready', 
+        `Posts for "${postSet.account.label}" couldn't be sent automatically. Export files are available at: ${process.env.APP_URL}/api/export/${postSetId}`,
+        `${process.env.APP_URL}/api/export/${postSetId}`
+      );
+      
       return NextResponse.json({ 
-        error: 'Failed to send posts to scheduler',
-        details: result.error
-      }, { status: 502 });
+        success: false,
+        error: 'All schedulers unavailable',
+        fallback: {
+          message: 'Export files generated for manual import',
+          exportUrl: `/api/export/${postSetId}`,
+          availableFormats: ['buffer', 'later', 'hootsuite', 'json'],
+          exports: result.result.exports
+        }
+      }, { status: 206 }); // 206 Partial Content - fallback used
     }
 
     // Update post set status
