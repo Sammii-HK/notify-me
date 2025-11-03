@@ -14,7 +14,7 @@ model Account {
   promptTemplate String   // includes {{WEEK_START_ISO}}, {{PILLARS}}, {{TZ}}, {{PLATFORMS_JSON}}, {{DO_NOT_REPEAT}}
   pillars        String   // JSON string array, e.g. ["lunar guidance","tarot",...]
   timezone       String   @default("Europe/London")
-  platforms      String   @default("[\"x\",\"threads\",\"bluesky\"]") // JSON string
+  platforms      String   @default("[\"x\",\"threads\",\"bluesky\",\"instagram\",\"linkedin\",\"tiktok\"]") // JSON string
   postsPerWeek   Int      @default(14)
   active         Boolean  @default(true)
   
@@ -24,6 +24,9 @@ model Account {
   brandValues    String?  // JSON: core values, mission, unique selling points
   contentGuidelines String? // JSON: dos/don'ts, hashtag strategy, content types
   examplePosts   String?  // JSON: array of high-performing posts for reference
+  platformSettings String? // JSON: platform-specific settings, character limits, hashtag preferences
+  websiteUrl     String?  // Website URL for tone analysis
+  csvData        String?  // CSV data for training and tone analysis
   
   // Context limits and usage tracking
   contextTokenLimit Int @default(8000) // Max tokens for context
