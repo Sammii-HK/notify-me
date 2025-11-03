@@ -27,6 +27,8 @@ model Account {
   platformSettings String? // JSON: platform-specific settings, character limits, hashtag preferences
   websiteUrl     String?  // Website URL for tone analysis
   csvData        String?  // CSV data for training and tone analysis
+  socialAccounts String?  // JSON: mapping of platforms to social media account IDs
+  schedulerConfig String? // JSON: scheduler-specific settings and account mappings
   
   // Context limits and usage tracking
   contextTokenLimit Int @default(8000) // Max tokens for context
