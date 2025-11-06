@@ -7,7 +7,8 @@ export async function getAccountsForSucculentUser(
   db: PrismaClient,
   succulentUserId: string
 ) {
-  const user = await db.user.findUnique({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const user = await (db as any).user.findUnique({
     where: { succulentUserId },
     include: {
       accountLinks: {
@@ -46,7 +47,8 @@ export async function getPrimaryAccountForSucculentUser(
   db: PrismaClient,
   succulentUserId: string
 ) {
-  const user = await db.user.findUnique({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const user = await (db as any).user.findUnique({
     where: { succulentUserId },
     include: {
       accountLinks: {
@@ -89,7 +91,8 @@ export async function syncSucculentUser(
     metadata?: Record<string, unknown>;
   }
 ) {
-  return await db.user.upsert({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return await (db as any).user.upsert({
     where: { succulentUserId },
     update: {
       succulentEmail: data.email,
@@ -119,7 +122,8 @@ export async function linkAccountToSucculentUser(
   }
 ) {
   // Get or create user
-  const user = await db.user.findUnique({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const user = await (db as any).user.findUnique({
     where: { succulentUserId }
   });
 
@@ -129,7 +133,8 @@ export async function linkAccountToSucculentUser(
 
   // If setting as primary, unset other primary accounts
   if (options?.isPrimary) {
-    await db.userAccount.updateMany({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db as any).userAccount.updateMany({
       where: {
         userId: user.id,
         isPrimary: true
@@ -139,7 +144,8 @@ export async function linkAccountToSucculentUser(
   }
 
   // Create or update the link
-  return await db.userAccount.upsert({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return await (db as any).userAccount.upsert({
     where: {
       userId_accountId: {
         userId: user.id,

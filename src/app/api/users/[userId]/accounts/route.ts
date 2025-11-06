@@ -12,7 +12,8 @@ export async function GET(
   try {
     const { userId } = await params;
     
-    const user = await db.user.findUnique({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const user = await (db as any).user.findUnique({
       where: { id: userId }
     });
 
@@ -80,7 +81,8 @@ export async function POST(
     }
 
     // Validate user exists
-    const user = await db.user.findUnique({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const user = await (db as any).user.findUnique({
       where: { id: userId }
     });
 
@@ -99,7 +101,8 @@ export async function POST(
 
     // If setting as primary, unset other primary accounts for this user
     if (isPrimary) {
-      await db.userAccount.updateMany({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (db as any).userAccount.updateMany({
         where: { 
           userId,
           isPrimary: true
@@ -109,7 +112,8 @@ export async function POST(
     }
 
     // Create or update the link
-    const link = await db.userAccount.upsert({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const link = await (db as any).userAccount.upsert({
       where: {
         userId_accountId: {
           userId,

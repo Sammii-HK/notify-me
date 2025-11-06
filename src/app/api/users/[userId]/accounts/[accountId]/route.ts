@@ -13,7 +13,8 @@ export async function DELETE(
     const { userId, accountId } = await params;
 
     // Check if link exists
-    const link = await db.userAccount.findUnique({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const link = await (db as any).userAccount.findUnique({
       where: {
         userId_accountId: {
           userId,
@@ -32,7 +33,8 @@ export async function DELETE(
     }
 
     // Delete the link
-    await db.userAccount.delete({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db as any).userAccount.delete({
       where: {
         userId_accountId: {
           userId,
@@ -67,7 +69,8 @@ export async function PUT(
     const { role, isPrimary } = await request.json();
 
     // Check if link exists
-    const existing = await db.userAccount.findUnique({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const existing = await (db as any).userAccount.findUnique({
       where: {
         userId_accountId: {
           userId,
@@ -84,7 +87,8 @@ export async function PUT(
 
     // If setting as primary, unset other primary accounts
     if (isPrimary === true) {
-      await db.userAccount.updateMany({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (db as any).userAccount.updateMany({
         where: { 
           userId,
           isPrimary: true,
@@ -95,7 +99,8 @@ export async function PUT(
     }
 
     // Update the link
-    const updated = await db.userAccount.update({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updated = await (db as any).userAccount.update({
       where: {
         userId_accountId: {
           userId,

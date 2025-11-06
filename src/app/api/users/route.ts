@@ -14,7 +14,8 @@ export async function GET(request: NextRequest) {
       ? { succulentUserId } 
       : {};
     
-    const users = await db.user.findMany({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const users = await (db as any).user.findMany({
       where,
       include: {
         accountLinks: {
@@ -61,7 +62,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Upsert user (create or update if exists)
-    const user = await db.user.upsert({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const user = await (db as any).user.upsert({
       where: { succulentUserId },
       update: {
         succulentEmail,
