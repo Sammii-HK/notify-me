@@ -6,7 +6,7 @@ import { generateObject, streamObject } from 'ai';
 import { z } from 'zod';
 import { distributePlatforms, getAllPlatformGuidelines } from './platform-config';
 
-const MODEL = process.env.OPENAI_DEFAULT_MODEL || 'gpt-4o-mini';
+export const MODEL = process.env.OPENAI_DEFAULT_MODEL || 'gpt-4o-mini';
 
 // Platform-specific post schema for better content targeting
 const PostSchema = z.object({
@@ -38,9 +38,22 @@ export function interpolatePrompt(template: string, vars: Record<string, string>
 }
 
 /**
- * Generate posts using AI SDK with structured output and validation
+ * Token usage information from AI SDK
  */
-export async function generatePosts(apiKey: string, prompt: string): Promise<PostsResponse> {
+export interface TokenUsage {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+}
+
+/**
+ * Generate posts using AI SDK with structured output and validation
+ * Returns both the posts and actual token usage for cost tracking
+ */
+export async function generatePosts(
+  apiKey: string, 
+  prompt: string
+): Promise<{ posts: PostsResponse; usage: TokenUsage }> {
   try {
     const openaiProvider = createOpenAI({
       apiKey,
@@ -57,7 +70,14 @@ export async function generatePosts(apiKey: string, prompt: string): Promise<Pos
     // Validate the result
     const validatedData = PostsResponseSchema.parse(result.object);
     
-    return validatedData;
+    // Capture actual token usage from AI SDK
+    const usage: TokenUsage = {
+      promptTokens: result.usage?.promptTokens ?? 0,
+      completionTokens: result.usage?.completionTokens ?? 0,
+      totalTokens: result.usage?.totalTokens ?? 0,
+    };
+    
+    return { posts: validatedData, usage };
   } catch (error) {
     console.error('AI generation error:', error);
     
@@ -81,6 +101,7 @@ export async function generatePosts(apiKey: string, prompt: string): Promise<Pos
 
 /**
  * Generate posts with streaming for better UX - returns an async iterator
+ * Also yields token usage when complete
  */
 export async function* generatePostsStream(apiKey: string, prompt: string) {
   const openaiProvider = createOpenAI({
@@ -103,13 +124,22 @@ export async function* generatePostsStream(apiKey: string, prompt: string) {
     };
   }
 
-  // Return final validated result
+  // Return final validated result with usage
   try {
     const finalObject = await result.object;
     const validatedData = PostsResponseSchema.parse(finalObject);
+    
+    // Capture actual token usage
+    const usage: TokenUsage = {
+      promptTokens: result.usage?.promptTokens ?? 0,
+      completionTokens: result.usage?.completionTokens ?? 0,
+      totalTokens: result.usage?.totalTokens ?? 0,
+    };
+    
     yield {
       type: 'complete' as const,
       data: validatedData,
+      usage,
     };
   } catch (error) {
     yield {
@@ -229,7 +259,8 @@ export function estimateTokens(text: string): number {
 }
 
 /**
- * Truncate context to fit within token limits
+ * Smart context truncation that prioritizes important sections
+ * Priority order: brand voice > content guidelines > target audience > brand values > examples > recent posts
  */
 export function truncateContext(context: string, maxTokens: number): string {
   const estimatedTokens = estimateTokens(context);
@@ -238,9 +269,78 @@ export function truncateContext(context: string, maxTokens: number): string {
     return context;
   }
   
-  // Rough truncation - keep first 80% of allowed characters
-  const maxChars = maxTokens * 4 * 0.8;
-  return context.substring(0, maxChars) + '\n\n[Context truncated to fit token limit]';
+  // Split context by section headers (e.g., "BRAND VOICE:", "TARGET AUDIENCE:")
+  const sectionPattern = /\n([A-Z][A-Z\s]+):\n/g;
+  const sections: Array<{ header: string; content: string; priority: number }> = [];
+  let lastIndex = 0;
+  let match;
+  const matches: Array<{ index: number; header: string }> = [];
+  
+  // Find all section headers
+  while ((match = sectionPattern.exec(context)) !== null) {
+    matches.push({ index: match.index, header: match[1] });
+  }
+  
+  // Extract sections
+  for (let i = 0; i < matches.length; i++) {
+    const start = matches[i].index;
+    const end = i < matches.length - 1 ? matches[i + 1].index : context.length;
+    const sectionContent = context.substring(start, end).trim();
+    const header = matches[i].header;
+    
+    sections.push({
+      header,
+      content: sectionContent,
+      priority: getSectionPriority(header),
+    });
+  }
+  
+  // If no sections found, fall back to simple truncation
+  if (sections.length === 0) {
+    const maxChars = maxTokens * 4 * 0.8;
+    return context.substring(0, maxChars) + '\n\n[Context truncated to fit token limit]';
+  }
+  
+  // Sort by priority (lower number = higher priority)
+  sections.sort((a, b) => a.priority - b.priority);
+  
+  // Build truncated context, keeping high-priority sections
+  let truncated = '';
+  let currentTokens = 0;
+  const maxTokenBudget = Math.floor(maxTokens * 0.8); // 80% of max to leave buffer
+  
+  for (const section of sections) {
+    const sectionTokens = estimateTokens(section.content);
+    if (currentTokens + sectionTokens <= maxTokenBudget) {
+      truncated += section.content + '\n\n';
+      currentTokens += sectionTokens;
+    } else {
+      // Truncate this section if we're running out of space
+      const remainingTokens = maxTokenBudget - currentTokens;
+      if (remainingTokens > 50) {
+        const remainingChars = remainingTokens * 4;
+        truncated += section.content.substring(0, remainingChars) + '\n\n[Section truncated]';
+      }
+      break;
+    }
+  }
+  
+  return truncated.trim() || context.substring(0, maxTokens * 4 * 0.8) + '\n\n[Context truncated to fit token limit]';
+}
+
+/**
+ * Get priority for context sections (lower = higher priority)
+ */
+function getSectionPriority(header: string): number {
+  const name = header.toLowerCase();
+  if (name.includes('brand voice') || name.includes('voice')) return 1;
+  if (name.includes('content guidelines') || name.includes('guidelines')) return 2;
+  if (name.includes('target audience') || name.includes('audience')) return 3;
+  if (name.includes('brand values') || name.includes('values')) return 4;
+  if (name.includes('example') || name.includes('high-performing')) return 5;
+  if (name.includes('platform')) return 6;
+  if (name.includes('recent') || name.includes('avoid repeating')) return 7;
+  return 8; // Default priority
 }
 
 /**
@@ -336,8 +436,12 @@ export async function generatePostsForAccount(db: PrismaClient, accountId: strin
     BRAND_CONTEXT: truncatedContext
   });
 
-  const response = await generatePosts(account.openaiApiKey, prompt);
+  const { posts: response, usage } = await generatePosts(account.openaiApiKey, prompt);
   const postSet = await savePostSet(db, account, weekStartISO, prompt, response);
+
+  // Track actual token usage and costs
+  const { trackGeneration } = await import('./cost-monitor');
+  await trackGeneration(db, account.id, usage, MODEL);
 
   return postSet;
 }

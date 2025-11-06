@@ -7,6 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                String   @id @default(cuid())
+  succulentUserId   String?  @unique // Succulent Social user ID
+  succulentEmail    String?  // Succulent user email for reference
+  name              String?  // Display name
+  metadata          String?  // JSON: additional user metadata from Succulent
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Many-to-many relationship with accounts (personas)
+  accountLinks      UserAccount[]
+}
+
 model Account {
   id             String   @id @default(cuid())
   label          String
@@ -38,6 +52,29 @@ model Account {
   createdAt      DateTime @default(now())
   postSets       PostSet[]
   dedupeEntries  Dedupe[]
+  
+  // Many-to-many relationship with users
+  userLinks      UserAccount[]
+}
+
+// Join table for many-to-many relationship between Users and Accounts
+model UserAccount {
+  id        String   @id @default(cuid())
+  userId    String
+  accountId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  // Optional: role or permissions for this user-account link
+  role      String?  // e.g., "owner", "editor", "viewer"
+  isPrimary Boolean  @default(false) // Mark primary account for a user
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([userId, accountId])
+  @@index([userId])
+  @@index([accountId])
 }
 
 model PostSet {

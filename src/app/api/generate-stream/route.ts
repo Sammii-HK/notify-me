@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server';
 import db from '@/lib/db';
-import { generatePostsStream, interpolatePrompt, getDoNotRepeat } from '@/lib/generator';
+import { generatePostsStream, interpolatePrompt, getDoNotRepeat, buildBrandContext, truncateContext, MODEL } from '@/lib/generator';
 import { nextMondayISODate } from '@/lib/time';
+import { trackGeneration } from '@/lib/cost-monitor';
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,6 +29,15 @@ export async function POST(request: NextRequest) {
     const tz = account.timezone || 'Europe/London';
     const weekStartISO = nextMondayISODate(tz);
     const doNotRepeat = await getDoNotRepeat(db, account.id);
+    const brandContext = await buildBrandContext(db, account.id);
+    
+    // Build comprehensive context within token limits
+    let fullContext = brandContext;
+    if (doNotRepeat !== 'None') {
+      fullContext += `\n\nRECENT CONTENT TO AVOID REPEATING:\n${doNotRepeat}`;
+    }
+    
+    const truncatedContext = truncateContext(fullContext, (account as Record<string, unknown>).contextTokenLimit as number || 8000);
     
     const prompt = interpolatePrompt(account.promptTemplate, {
       WEEK_START_ISO: weekStartISO,
@@ -35,7 +45,8 @@ export async function POST(request: NextRequest) {
       PLATFORMS_JSON: account.platforms,
       PILLARS: account.pillars,
       POSTS_PER_WEEK: account.postsPerWeek.toString(),
-      DO_NOT_REPEAT: doNotRepeat
+      DO_NOT_REPEAT: doNotRepeat,
+      BRAND_CONTEXT: truncatedContext
     });
 
     // Create a ReadableStream for Server-Sent Events
@@ -46,6 +57,12 @@ export async function POST(request: NextRequest) {
           for await (const chunk of generatePostsStream(account.openaiApiKey, prompt)) {
             const data = `data: ${JSON.stringify(chunk)}\n\n`;
             controller.enqueue(encoder.encode(data));
+            
+            // Track token usage and costs when complete
+            if (chunk.type === 'complete' && 'usage' in chunk) {
+              const usage = chunk.usage;
+              await trackGeneration(db, account.id, usage, MODEL);
+            }
           }
           
           controller.enqueue(encoder.encode('data: [DONE]\n\n'));

@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { estimateTokens } from './generator';
+import { estimateTokens, TokenUsage } from './generator';
 
 export interface CostEstimate {
   inputTokens: number;
@@ -58,11 +58,21 @@ export function estimateGenerationCost(
 }
 
 /**
- * Track generation usage for an account
+ * Calculate actual cost from token usage
+ */
+export function calculateCost(usage: TokenUsage, model: string = 'gpt-4o-mini'): number {
+  const pricing = PRICING[model as keyof typeof PRICING] || PRICING['gpt-4o-mini'];
+  return (usage.promptTokens * pricing.input) + (usage.completionTokens * pricing.output);
+}
+
+/**
+ * Track generation usage for an account with actual token usage
  */
 export async function trackGeneration(
   db: PrismaClient,
-  accountId: string
+  accountId: string,
+  usage?: TokenUsage,
+  model: string = 'gpt-4o-mini'
 ) {
   const now = new Date();
   const account = await db.account.findUnique({
@@ -75,21 +85,35 @@ export async function trackGeneration(
   const accountData = account as Record<string, unknown>;
   const lastResetDate = accountData.lastResetDate as Date | undefined;
   const monthlyGenCount = accountData.monthlyGenCount as number | undefined;
+  const monthlyCost = (accountData.monthlyCost as number | undefined) || 0;
   
   if (lastResetDate && monthlyGenCount !== undefined) {
     const lastReset = new Date(lastResetDate);
     const shouldReset = now.getMonth() !== lastReset.getMonth() || 
                        now.getFullYear() !== lastReset.getFullYear();
 
+    // Calculate actual cost if usage provided
+    const actualCost = usage ? calculateCost(usage, model) : 0;
+
     // Use dynamic update to avoid schema issues
     const updateData: Record<string, unknown> = {};
     updateData.monthlyGenCount = shouldReset ? 1 : monthlyGenCount + 1;
     updateData.lastResetDate = shouldReset ? now : lastResetDate;
+    
+    // Track actual costs if usage provided
+    if (usage) {
+      updateData.monthlyCost = shouldReset ? actualCost : monthlyCost + actualCost;
+    }
 
     await db.account.update({
       where: { id: accountId },
       data: updateData as never // Type assertion to bypass Prisma type checking
     });
+    
+    // Log cost tracking
+    if (usage) {
+      console.log(`[Cost Tracking] Account: ${account.label}, Cost: $${actualCost.toFixed(4)}, Monthly Total: $${((updateData.monthlyCost as number) || 0).toFixed(2)}`);
+    }
   }
 }
 
