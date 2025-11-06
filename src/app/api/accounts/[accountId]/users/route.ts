@@ -20,6 +20,7 @@ export async function GET(
       return NextResponse.json({ error: 'Account not found' }, { status: 404 });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userLinks = await (db as any).userAccount.findMany({
       where: { accountId },
       include: {
@@ -40,6 +41,7 @@ export async function GET(
     });
 
     return NextResponse.json({ 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       users: userLinks.map((link: any) => ({
         ...link.user,
         linkId: link.id,

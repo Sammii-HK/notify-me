@@ -59,7 +59,7 @@ export class BufferExportAdapter implements SchedulerAdapter {
   id = 'buffer-export';
   name = 'Buffer (CSV Export)';
 
-  async sendBulk(posts: SchedulerPost[]): Promise<{ ok: boolean; externalId?: string; error?: string }> {
+  async sendBulk(_posts: SchedulerPost[]): Promise<{ ok: boolean; externalId?: string; error?: string }> {
     // This adapter doesn't send, it exports for manual import
     return { ok: false, error: 'Use exportFormat() instead for Buffer CSV export' };
   }
@@ -92,7 +92,7 @@ export class LaterExportAdapter implements SchedulerAdapter {
   id = 'later-export';
   name = 'Later (CSV Export)';
 
-  async sendBulk(posts: SchedulerPost[]): Promise<{ ok: boolean; externalId?: string; error?: string }> {
+  async sendBulk(_posts: SchedulerPost[]): Promise<{ ok: boolean; externalId?: string; error?: string }> {
     return { ok: false, error: 'Use exportFormat() instead for Later CSV export' };
   }
 
@@ -134,7 +134,7 @@ export class HootsuiteExportAdapter implements SchedulerAdapter {
   id = 'hootsuite-export';
   name = 'Hootsuite (CSV Export)';
 
-  async sendBulk(posts: SchedulerPost[]): Promise<{ ok: boolean; externalId?: string; error?: string }> {
+  async sendBulk(_posts: SchedulerPost[]): Promise<{ ok: boolean; externalId?: string; error?: string }> {
     return { ok: false, error: 'Use exportFormat() instead for Hootsuite CSV export' };
   }
 
@@ -178,7 +178,7 @@ export class JsonExportAdapter implements SchedulerAdapter {
   id = 'json-export';
   name = 'JSON Export (Universal)';
 
-  async sendBulk(posts: SchedulerPost[]): Promise<{ ok: boolean; externalId?: string; error?: string }> {
+  async sendBulk(_posts: SchedulerPost[]): Promise<{ ok: boolean; externalId?: string; error?: string }> {
     return { ok: false, error: 'Use exportFormat() instead for JSON export' };
   }
 
@@ -238,7 +238,7 @@ export function getSchedulerAdapter(adapterId?: string): SchedulerAdapter {
 export async function sendWithFallback(
   posts: SchedulerPost[],
   preferredAdapterId?: string
-): Promise<{ success: boolean; usedAdapter: string; result: any; error?: string }> {
+): Promise<{ success: boolean; usedAdapter: string; result: unknown; error?: string }> {
   const adapters = getAllSchedulerAdapters();
   
   // Try preferred adapter first

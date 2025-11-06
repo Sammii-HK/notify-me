@@ -4,7 +4,7 @@ import { nextMondayISODate } from './time';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateObject, streamObject } from 'ai';
 import { z } from 'zod';
-import { distributePlatforms, getAllPlatformGuidelines } from './platform-config';
+import { getAllPlatformGuidelines } from './platform-config';
 
 export const MODEL = process.env.OPENAI_DEFAULT_MODEL || 'gpt-4o-mini';
 
@@ -272,7 +272,6 @@ export function truncateContext(context: string, maxTokens: number): string {
   // Split context by section headers (e.g., "BRAND VOICE:", "TARGET AUDIENCE:")
   const sectionPattern = /\n([A-Z][A-Z\s]+):\n/g;
   const sections: Array<{ header: string; content: string; priority: number }> = [];
-  let lastIndex = 0;
   let match;
   const matches: Array<{ index: number; header: string }> = [];
   

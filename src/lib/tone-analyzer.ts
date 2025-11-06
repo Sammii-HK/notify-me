@@ -146,6 +146,7 @@ export function parseCsvContent(csvData: string): string[] {
  * Update account with tone analysis results
  */
 export async function updateAccountTone(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   db: any,
   accountId: string,
   toneAnalysis: ToneAnalysis
@@ -165,6 +166,7 @@ export async function updateAccountTone(
     donts: toneAnalysis.recommendations.filter(r => r.toLowerCase().includes('avoid')).join(', ')
   };
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (db as any).account.update({
     where: { id: accountId },
     data: {
