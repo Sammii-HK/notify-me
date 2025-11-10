@@ -50,7 +50,7 @@ async function testIntegration() {
     console.log('3️⃣  Getting user\'s accounts...');
     const accounts = await getAccountsForSucculentUser(db, testSucculentUserId);
     console.log(`   ✅ Found ${accounts.length} account(s):`);
-    accounts.forEach(acc => {
+    accounts.forEach((acc: { label: string; id: string; isPrimary: boolean }) => {
       console.log(`      - ${acc.label} (${acc.id}) - ${acc.isPrimary ? 'PRIMARY' : 'secondary'}`);
     });
     console.log();

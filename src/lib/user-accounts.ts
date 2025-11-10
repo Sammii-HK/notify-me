@@ -32,8 +32,8 @@ export async function getAccountsForSucculentUser(
     return [];
   }
 
-  return user.accountLinks.map(link => ({
-    ...link.account,
+  return user.accountLinks.map((link: { id: string; account: Record<string, unknown>; role: string | null; isPrimary: boolean }) => ({
+    ...(link.account as Record<string, unknown>),
     linkId: link.id,
     role: link.role,
     isPrimary: link.isPrimary

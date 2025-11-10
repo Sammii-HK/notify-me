@@ -111,7 +111,7 @@ export async function POST(
           message: 'Export files generated for manual import',
           exportUrl: `/api/export/${postSetId}`,
           availableFormats: ['buffer', 'later', 'hootsuite', 'json'],
-          exports: result.result.exports
+          exports: (result.result as { exports?: unknown[] })?.exports || []
         }
       }, { status: 206 }); // 206 Partial Content - fallback used
     }
@@ -143,7 +143,7 @@ export async function POST(
       success: true,
       message: 'Posts approved and sent successfully',
       sentCount: postsToSend.length,
-      externalId: result.externalId
+      externalId: (result.result as { externalId?: string })?.externalId
     });
   } catch (error) {
     console.error('Error approving posts:', error);

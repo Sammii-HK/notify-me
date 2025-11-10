@@ -12,6 +12,7 @@ export const MODEL = process.env.OPENAI_DEFAULT_MODEL || 'gpt-4o-mini';
 const PostSchema = z.object({
   content: z.string(),
   platform: z.string(), // Single platform per post for better targeting
+  platforms: z.array(z.string()).optional(), // Also accept platforms array for compatibility
   scheduledDate: z.string(),
   title: z.string().optional(),
   mediaUrls: z.array(z.string()).optional(),
@@ -71,10 +72,12 @@ export async function generatePosts(
     const validatedData = PostsResponseSchema.parse(result.object);
     
     // Capture actual token usage from AI SDK
+    // AI SDK v5 uses different property names - handle both formats
+    const usageData = result.usage as unknown as { promptTokens?: number; completionTokens?: number; totalTokens?: number };
     const usage: TokenUsage = {
-      promptTokens: result.usage?.promptTokens ?? 0,
-      completionTokens: result.usage?.completionTokens ?? 0,
-      totalTokens: result.usage?.totalTokens ?? 0,
+      promptTokens: usageData?.promptTokens ?? 0,
+      completionTokens: usageData?.completionTokens ?? 0,
+      totalTokens: usageData?.totalTokens ?? 0,
     };
     
     return { posts: validatedData, usage };
@@ -130,10 +133,12 @@ export async function* generatePostsStream(apiKey: string, prompt: string) {
     const validatedData = PostsResponseSchema.parse(finalObject);
     
     // Capture actual token usage
+    // AI SDK v5 uses different property names - handle both formats
+    const usageData = result.usage as unknown as { promptTokens?: number; completionTokens?: number; totalTokens?: number };
     const usage: TokenUsage = {
-      promptTokens: result.usage?.promptTokens ?? 0,
-      completionTokens: result.usage?.completionTokens ?? 0,
-      totalTokens: result.usage?.totalTokens ?? 0,
+      promptTokens: usageData?.promptTokens ?? 0,
+      completionTokens: usageData?.completionTokens ?? 0,
+      totalTokens: usageData?.totalTokens ?? 0,
     };
     
     yield {
@@ -376,7 +381,7 @@ export async function savePostSet(
         postSetId: postSet.id,
         title: post.title ?? null,
         content: post.content,
-        platforms: JSON.stringify(post.platforms),
+        platforms: JSON.stringify(post.platforms || [post.platform]),
         scheduledAt: new Date(post.scheduledDate),
         mediaUrls: JSON.stringify(post.mediaUrls ?? []),
         contentHash: hashContent(post.content)

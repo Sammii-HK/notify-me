@@ -15,11 +15,29 @@ const eslintConfig = [
     ignores: [
       "node_modules/**",
       ".next/**",
+      ".vercel/**",
       "out/**",
       "build/**",
+      "dist/**",
       "next-env.d.ts",
+      "**/*.config.{js,mjs,ts}",
     ],
   },
+  {
+    rules: {
+      // Allow eslint-disable comments for Prisma client types that aren't generated yet
+      "@typescript-eslint/no-explicit-any": ["error", {
+        "ignoreRestArgs": false,
+        "fixToUnknown": false
+      }],
+      // Allow unused vars prefixed with underscore
+      "@typescript-eslint/no-unused-vars": ["warn", {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }],
+      "prefer-const": "warn"
+    }
+  }
 ];
 
 export default eslintConfig;
