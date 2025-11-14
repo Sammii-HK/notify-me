@@ -416,11 +416,17 @@ export async function generatePostsForAccount(db: PrismaClient, accountId: strin
   });
 
   if (existing) {
-    throw new Error(`Posts already generated for week starting ${weekStartISO}`);
+    // Return existing post set instead of throwing error
+    // This allows users to view existing posts even if they try to regenerate
+    return existing;
   }
 
   const doNotRepeat = await getDoNotRepeat(db, account.id);
-  const brandContext = await buildBrandContext(db, account.id);
+  let brandContext = await buildBrandContext(db, account.id);
+  
+  // Enhance with learned insights from feedback
+  const { enhanceBrandContextWithLearning } = await import('./ml-learning');
+  brandContext = await enhanceBrandContextWithLearning(db, account.id, brandContext);
   
   // Build comprehensive context within token limits
   let fullContext = brandContext;

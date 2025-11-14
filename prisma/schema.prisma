@@ -8,70 +8,71 @@ datasource db {
 }
 
 model User {
-  id                String   @id @default(cuid())
-  succulentUserId   String?  @unique // Succulent Social user ID
-  succulentEmail    String?  // Succulent user email for reference
-  name              String?  // Display name
-  metadata          String?  // JSON: additional user metadata from Succulent
-  
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
+  id              String  @id @default(cuid())
+  succulentUserId String? @unique // Succulent Social user ID
+  succulentEmail  String? // Succulent user email for reference
+  name            String? // Display name
+  metadata        String? // JSON: additional user metadata from Succulent
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Many-to-many relationship with accounts (personas)
-  accountLinks      UserAccount[]
+  accountLinks UserAccount[]
 }
 
 model Account {
-  id             String   @id @default(cuid())
+  id             String  @id @default(cuid())
   label          String
   openaiApiKey   String
-  promptTemplate String   // includes {{WEEK_START_ISO}}, {{PILLARS}}, {{TZ}}, {{PLATFORMS_JSON}}, {{DO_NOT_REPEAT}}
-  pillars        String   // JSON string array, e.g. ["lunar guidance","tarot",...]
-  timezone       String   @default("Europe/London")
-  platforms      String   @default("[\"x\",\"threads\",\"bluesky\",\"instagram\",\"linkedin\",\"tiktok\"]") // JSON string
-  postsPerWeek   Int      @default(14)
-  active         Boolean  @default(true)
-  
+  promptTemplate String // includes {{WEEK_START_ISO}}, {{PILLARS}}, {{TZ}}, {{PLATFORMS_JSON}}, {{DO_NOT_REPEAT}}
+  pillars        String // JSON string array, e.g. ["lunar guidance","tarot",...]
+  timezone       String  @default("Europe/London")
+  platforms      String  @default("[\"x\",\"threads\",\"bluesky\",\"instagram\",\"linkedin\",\"tiktok\"]") // JSON string
+  postsPerWeek   Int     @default(14)
+  active         Boolean @default(true)
+
   // Enhanced brand context fields
-  brandVoice     String?  // JSON: tone, personality, style guidelines
-  targetAudience String?  // JSON: demographics, interests, pain points
-  brandValues    String?  // JSON: core values, mission, unique selling points
+  brandVoice        String? // JSON: tone, personality, style guidelines
+  targetAudience    String? // JSON: demographics, interests, pain points
+  brandValues       String? // JSON: core values, mission, unique selling points
   contentGuidelines String? // JSON: dos/don'ts, hashtag strategy, content types
-  examplePosts   String?  // JSON: array of high-performing posts for reference
-  platformSettings String? // JSON: platform-specific settings, character limits, hashtag preferences
-  websiteUrl     String?  // Website URL for tone analysis
-  csvData        String?  // CSV data for training and tone analysis
-  socialAccounts String?  // JSON: mapping of platforms to social media account IDs
-  schedulerConfig String? // JSON: scheduler-specific settings and account mappings
-  
+  examplePosts      String? // JSON: array of high-performing posts for reference
+  platformSettings  String? // JSON: platform-specific settings, character limits, hashtag preferences
+  websiteUrl        String? // Website URL for tone analysis
+  csvData           String? // CSV data for training and tone analysis
+  socialAccounts    String? // JSON: mapping of platforms to social media account IDs
+  schedulerConfig   String? // JSON: scheduler-specific settings and account mappings
+
   // Context limits and usage tracking
-  contextTokenLimit Int @default(8000) // Max tokens for context
-  monthlyGenCount   Int @default(0)    // Track usage for cost monitoring
+  contextTokenLimit Int      @default(8000) // Max tokens for context
+  monthlyGenCount   Int      @default(0) // Track usage for cost monitoring
   lastResetDate     DateTime @default(now())
-  
-  createdAt      DateTime @default(now())
-  postSets       PostSet[]
-  dedupeEntries  Dedupe[]
-  
+
+  createdAt     DateTime          @default(now())
+  postSets      PostSet[]
+  dedupeEntries Dedupe[]
+  learningData  AccountLearning[]
+
   // Many-to-many relationship with users
-  userLinks      UserAccount[]
+  userLinks UserAccount[]
 }
 
 // Join table for many-to-many relationship between Users and Accounts
 model UserAccount {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   userId    String
   accountId String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
   // Optional: role or permissions for this user-account link
-  role      String?  // e.g., "owner", "editor", "viewer"
-  isPrimary Boolean  @default(false) // Mark primary account for a user
-  
+  role      String? // e.g., "owner", "editor", "viewer"
+  isPrimary Boolean @default(false) // Mark primary account for a user
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@unique([userId, accountId])
   @@index([userId])
   @@index([accountId])
@@ -95,11 +96,15 @@ model Post {
   postSet     PostSet  @relation(fields: [postSetId], references: [id])
   title       String?
   content     String
-  platforms   String   // JSON string array
+  platforms   String // JSON string array
   scheduledAt DateTime
   mediaUrls   String   @default("[]") // JSON string array
   approved    Boolean  @default(false)
   contentHash String   @default("")
+
+  // Rating and feedback
+  ratings  PostRating[]
+  feedback PostFeedback[]
 }
 
 model Dedupe {
@@ -113,15 +118,63 @@ model Dedupe {
 
 model PushSubscription {
   id        String   @id @default(cuid())
-  userId    String?  // Optional: link to user if authenticated
+  userId    String? // Optional: link to user if authenticated
   endpoint  String   @unique // Browser push endpoint URL
-  p256dh    String   // Public key for encryption
-  auth      String   // Auth secret
-  metadata  String?  // JSON: browser info, user agent, etc.
+  p256dh    String // Public key for encryption
+  auth      String // Auth secret
+  metadata  String? // JSON: browser info, user agent, etc.
   active    Boolean  @default(true) // Can disable without deleting
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([userId])
   @@index([active])
+}
+
+// Post rating (simple good/bad)
+model PostRating {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String? // Optional: track who rated
+  rating    String // "good" | "bad"
+  createdAt DateTime @default(now())
+
+  @@index([postId])
+  @@index([userId])
+  @@index([rating])
+}
+
+// Detailed feedback for ML learning
+model PostFeedback {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String? // Optional: track who provided feedback
+  rating    String // "good" | "bad" | "neutral"
+  feedback  String? // Free-form feedback text
+  metrics   String? // JSON: engagement metrics if available (likes, shares, etc.)
+  tags      String? // JSON: array of tags (e.g., ["too-long", "off-brand", "great-tone"])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([postId])
+  @@index([userId])
+  @@index([rating])
+}
+
+// ML learning data - aggregated insights from feedback
+model AccountLearning {
+  id              String   @id @default(cuid())
+  accountId       String
+  account         Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  learningType    String // "tone", "content", "timing", "platform", etc.
+  insights        String // JSON: learned insights and patterns
+  performanceData String? // JSON: aggregated performance metrics
+  recommendations String? // JSON: AI recommendations based on feedback
+  lastUpdated     DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([accountId, learningType])
+  @@index([accountId])
 }
