@@ -442,17 +442,87 @@ export default function AccountEditorClient({ accountId }: { accountId: string }
           </div>
         </div>
 
+        {/* AI Prompt Helper */}
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">🤖 Generate Brand Context with AI</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Copy this prompt and paste it into ChatGPT, Claude, or any AI assistant to generate your brand context automatically.
+          </p>
+          <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-xs overflow-x-auto mb-4 whitespace-pre-wrap" id="ai-prompt-text">
+{`I need to create brand context for my social media account. Please help me fill out the following fields:
+
+**Account Name:** [Your account name]
+**Account Type:** [Personal brand, Business, Creative portfolio, Service provider, etc.]
+**What I Do:** [Brief description]
+**My Target Audience:** [Who follows you or who you want to reach]
+**My Unique Style/Voice:** [How you want to sound]
+**My Values:** [What you stand for]
+**Content I Share:** [Types of posts you make]
+
+Please generate a complete brand context in JSON format with:
+
+1. **brandVoice** (object with: tone, personality, styleGuidelines)
+2. **targetAudience** (object with: demographics, interests, painPoints)
+3. **brandValues** (object with: coreValues, mission, usp)
+4. **contentGuidelines** (object with: dos, donts, hashtags)
+5. **examplePosts** (array of 3-5 example posts)
+
+Output ONLY valid JSON that I can copy-paste directly. Format it like this:
+
+{
+  "brandVoice": {
+    "tone": "...",
+    "personality": "...",
+    "styleGuidelines": "..."
+  },
+  "targetAudience": {
+    "demographics": "...",
+    "interests": "...",
+    "painPoints": "..."
+  },
+  "brandValues": {
+    "coreValues": "...",
+    "mission": "...",
+    "usp": "..."
+  },
+  "contentGuidelines": {
+    "dos": "...",
+    "donts": "...",
+    "hashtags": "..."
+  },
+  "examplePosts": [
+    "...",
+    "...",
+    "..."
+  ]
+}`}
+          </div>
+          <button
+            onClick={() => {
+              const promptText = document.getElementById('ai-prompt-text')?.textContent || '';
+              navigator.clipboard.writeText(promptText).then(() => {
+                alert('✅ Prompt copied to clipboard! Paste it into ChatGPT/Claude now.');
+              }).catch(() => {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = promptText;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('✅ Prompt copied to clipboard! Paste it into ChatGPT/Claude now.');
+              });
+            }}
+            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+          >
+            📋 Copy Prompt to Clipboard
+          </button>
+        </div>
+
         {/* Example Posts */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-900">Example Posts</h2>
-            <a
-              href="/BRAND-CONTEXT-GENERATOR.md"
-              target="_blank"
-              className="text-sm text-blue-600 hover:text-blue-800"
-            >
-              📋 Copy AI Prompt →
-            </a>
           </div>
           <p className="text-sm text-gray-600 mb-4">
             Add example posts (one per line) that represent your best content. These will be used as style references.

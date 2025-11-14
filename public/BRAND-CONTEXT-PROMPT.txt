@@ -45,6 +45,3 @@ Output ONLY valid JSON that I can copy-paste directly. Format it like this:
     "..."
   ]
 }
-
-
-
