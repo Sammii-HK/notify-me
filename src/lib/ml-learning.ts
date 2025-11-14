@@ -37,9 +37,14 @@ export async function processFeedbackForLearning(
           orderBy: { createdAt: 'desc' },
           take: 1
         },
-        ratings: true
+        ratings: true,
+        postSet: {
+          select: {
+            createdAt: true
+          }
+        }
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { scheduledAt: 'desc' },
       take: 50
     });
 
