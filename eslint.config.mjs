@@ -35,7 +35,10 @@ const eslintConfig = [
         "argsIgnorePattern": "^_",
         "varsIgnorePattern": "^_"
       }],
-      "prefer-const": "warn"
+      "prefer-const": "warn",
+      // Next.js specific rules
+      "@next/next/no-html-link-for-pages": "error",
+      "@next/next/no-img-element": "warn"
     }
   }
 ];

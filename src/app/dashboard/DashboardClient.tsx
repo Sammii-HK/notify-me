@@ -46,10 +46,26 @@ export default function DashboardClient() {
 
   async function loadData() {
     try {
-      const [accountsRes, postSetsRes] = await Promise.all([
-        fetch('/api/accounts'),
-        fetch('/api/post-sets?limit=10')
-      ]);
+      // Check if we have a succulentUserId in URL params or localStorage
+      const urlParams = new URLSearchParams(window.location.search);
+      const succulentUserId = urlParams.get('succulentUserId') || 
+                              localStorage.getItem('succulentUserId');
+
+      let accountsRes, postSetsRes;
+      
+      if (succulentUserId) {
+        // Load accounts and posts for this user
+        [accountsRes, postSetsRes] = await Promise.all([
+          fetch(`/api/accounts/for-user?succulentUserId=${succulentUserId}`),
+          fetch(`/api/post-sets?succulentUserId=${succulentUserId}&limit=10`)
+        ]);
+      } else {
+        // Load all accounts (admin view)
+        [accountsRes, postSetsRes] = await Promise.all([
+          fetch('/api/accounts'),
+          fetch('/api/post-sets?limit=10')
+        ]);
+      }
 
       if (accountsRes.ok) {
         const accountsData = await accountsRes.json();
@@ -80,7 +96,15 @@ export default function DashboardClient() {
 
       if (response.ok) {
         const result = await response.json();
-        alert(`✅ Posts generated! ${result.message || ''}\n\nReview URL: ${result.reviewUrl || 'N/A'}`);
+        if (result.alreadyExists) {
+          alert(`ℹ️ ${result.message || 'Posts already exist for this week.'}\n\nReview URL: ${result.reviewUrl || 'N/A'}`);
+          // Navigate to review page
+          if (result.reviewUrl) {
+            window.location.href = result.reviewUrl;
+          }
+        } else {
+          alert(`✅ Posts generated! ${result.message || ''}\n\nReview URL: ${result.reviewUrl || 'N/A'}`);
+        }
         loadData(); // Refresh
       } else {
         let errorData;

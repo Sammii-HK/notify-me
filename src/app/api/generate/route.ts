@@ -30,6 +30,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Account is not active' }, { status: 400 });
     }
 
+    // Check if posts already exist for this week
+    const tz = account.timezone || 'Europe/London';
+    const { nextMondayISODate } = await import('@/lib/time');
+    const weekStartISO = nextMondayISODate(tz, 1);
+    
+    const existing = await db.postSet.findFirst({
+      where: {
+        accountId: account.id,
+        weekStart: new Date(weekStartISO)
+      }
+    });
+
+    if (existing) {
+      const reviewUrl = `${process.env.APP_URL || 'http://localhost:3000'}/review/${existing.id}`;
+      return NextResponse.json({
+        success: true,
+        accountId: account.id,
+        accountLabel: account.label,
+        postSetId: existing.id,
+        reviewUrl,
+        message: `Posts already exist for week starting ${weekStartISO}. View them here.`,
+        alreadyExists: true
+      });
+    }
+
     // Generate posts
     const postSet = await generatePostsForAccount(db, account.id);
     
@@ -53,7 +78,8 @@ export async function POST(request: NextRequest) {
       accountLabel: account.label,
       postSetId: postSet.id,
       reviewUrl,
-      message: `Posts generated successfully for ${account.label}`
+      message: `Posts generated successfully for ${account.label}`,
+      alreadyExists: false
     });
   } catch (error) {
     console.error('Manual generation error:', error);
