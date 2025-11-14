@@ -70,7 +70,7 @@ export default function DashboardClient() {
   async function generatePosts(accountId: string) {
     setGenerating(accountId);
     try {
-      const response = await fetch('/api/cron/weekly', {
+      const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -80,15 +80,15 @@ export default function DashboardClient() {
 
       if (response.ok) {
         const result = await response.json();
-        alert(`Posts generated! Post set ID: ${result.postSetId || 'N/A'}`);
+        alert(`✅ Posts generated! ${result.message || ''}\n\nReview URL: ${result.reviewUrl || 'N/A'}`);
         loadData(); // Refresh
       } else {
-        const error = await response.text();
-        alert(`Failed to generate posts: ${error}`);
+        const errorData = await response.json().catch(() => ({ error: await response.text() }));
+        alert(`❌ Failed to generate posts: ${errorData.error || errorData.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Generation error:', error);
-      alert('Failed to generate posts');
+      alert(`❌ Failed to generate posts: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setGenerating(null);
     }
