@@ -196,36 +196,38 @@ export default function AccountEditorClient({ accountId }: { accountId: string }
             />
             <div className="flex gap-2">
               <button
-                onClick={() => {
+                onClick={async () => {
                   try {
                     const data = JSON.parse(jsonInput);
+                    
+                    // Update account state directly with all imported data
+                    if (!account) return;
+                    
+                    const updatedAccount = { ...account };
+                    
                     if (data.brandVoice) {
-                      updateBrandVoice('tone', data.brandVoice.tone || '');
-                      updateBrandVoice('personality', data.brandVoice.personality || '');
-                      updateBrandVoice('styleGuidelines', data.brandVoice.styleGuidelines || '');
+                      updatedAccount.brandVoice = JSON.stringify(data.brandVoice);
                     }
                     if (data.targetAudience) {
-                      updateTargetAudience('demographics', data.targetAudience.demographics || '');
-                      updateTargetAudience('interests', data.targetAudience.interests || '');
-                      updateTargetAudience('painPoints', data.targetAudience.painPoints || '');
+                      updatedAccount.targetAudience = JSON.stringify(data.targetAudience);
                     }
                     if (data.brandValues) {
-                      updateBrandValues('coreValues', data.brandValues.coreValues || '');
-                      updateBrandValues('mission', data.brandValues.mission || '');
-                      updateBrandValues('usp', data.brandValues.usp || '');
+                      updatedAccount.brandValues = JSON.stringify(data.brandValues);
                     }
                     if (data.contentGuidelines) {
-                      updateContentGuidelines('dos', data.contentGuidelines.dos || '');
-                      updateContentGuidelines('donts', data.contentGuidelines.donts || '');
-                      updateContentGuidelines('hashtags', data.contentGuidelines.hashtags || '');
+                      updatedAccount.contentGuidelines = JSON.stringify(data.contentGuidelines);
                     }
                     if (data.examplePosts && Array.isArray(data.examplePosts)) {
-                      updateExamplePosts(data.examplePosts.join('\n'));
+                      updatedAccount.examplePosts = JSON.stringify(data.examplePosts);
                     }
+                    
+                    // Update state to trigger re-render
+                    setAccount(updatedAccount);
                     setShowJsonPaste(false);
                     setJsonInput('');
-                    alert('Brand context imported successfully!');
-                  } catch {
+                    alert('✅ Brand context imported successfully! Fields updated.');
+                  } catch (err) {
+                    console.error('JSON import error:', err);
                     alert('Invalid JSON. Please check the format.');
                   }
                 }}
