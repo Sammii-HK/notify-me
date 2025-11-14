@@ -83,7 +83,13 @@ export default function DashboardClient() {
         alert(`✅ Posts generated! ${result.message || ''}\n\nReview URL: ${result.reviewUrl || 'N/A'}`);
         loadData(); // Refresh
       } else {
-        const errorData = await response.json().catch(() => ({ error: await response.text() }));
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch {
+          const errorText = await response.text();
+          errorData = { error: errorText };
+        }
         alert(`❌ Failed to generate posts: ${errorData.error || errorData.message || 'Unknown error'}`);
       }
     } catch (error) {
