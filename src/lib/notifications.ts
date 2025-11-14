@@ -29,8 +29,8 @@ export async function notifyDiscord(message: string): Promise<void> {
  * Send a notification to Pushover
  */
 export async function notifyPushover(title: string, message: string): Promise<void> {
-  const token = process.env.PUSHOVER_TOKEN;
-  const user = process.env.PUSHOVER_USER;
+  const token = process.env.PUSHOVER_API_TOKEN || process.env.PUSHOVER_TOKEN;
+  const user = process.env.PUSHOVER_USER_KEY || process.env.PUSHOVER_USER;
   
   if (!token || !user) {
     console.log('Pushover credentials not configured, skipping notification');
@@ -71,6 +71,7 @@ export async function notifyBoth(title: string, message: string, reviewUrl?: str
 
 /**
  * Send push notifications to all subscribers
+ * Now uses database-stored subscriptions
  */
 export async function notifyPushSubscribers(
   title: string, 
@@ -78,8 +79,7 @@ export async function notifyPushSubscribers(
   reviewUrl?: string
 ): Promise<void> {
   try {
-    // In a real app, you'd fetch subscriptions from database
-    // For now, we'll make a request to trigger notifications
+    // Call the notify endpoint which fetches from database
     const response = await fetch(`${process.env.APP_URL || 'http://localhost:3000'}/api/push/notify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -87,7 +87,11 @@ export async function notifyPushSubscribers(
     });
     
     if (!response.ok) {
-      console.error('Failed to send push notifications');
+      const errorText = await response.text();
+      console.error('Failed to send push notifications:', response.status, errorText);
+    } else {
+      const result = await response.json();
+      console.log(`Push notifications sent to ${result.sent || 0} subscribers`);
     }
   } catch (error) {
     console.error('Push notification error:', error);

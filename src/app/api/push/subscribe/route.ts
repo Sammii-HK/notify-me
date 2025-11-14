@@ -1,31 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-// In a real app, you'd store subscriptions in your database
-// For now, we'll use a simple in-memory store (this will reset on deployment)
-const subscriptions: unknown[] = [];
+import db from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
-    const subscription = await request.json();
+    const body = await request.json();
+    const { endpoint, keys, userId, metadata } = body;
     
     // Validate subscription
-    if (!subscription.endpoint || !subscription.keys) {
+    if (!endpoint || !keys || !keys.p256dh || !keys.auth) {
       return NextResponse.json(
-        { error: 'Invalid subscription' },
+        { error: 'Invalid subscription - missing endpoint or keys' },
         { status: 400 }
       );
     }
     
-    // Store subscription (in real app, save to database)
-    subscriptions.push(subscription);
+    // Store subscription in database (upsert by endpoint)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db as any).pushSubscription.upsert({
+      where: { endpoint },
+      update: {
+        p256dh: keys.p256dh,
+        auth: keys.auth,
+        userId: userId || null,
+        active: true,
+        updatedAt: new Date()
+      },
+      create: {
+        endpoint,
+        p256dh: keys.p256dh,
+        auth: keys.auth,
+        userId: userId || null,
+        metadata: metadata ? JSON.stringify(metadata) : null,
+        active: true
+      }
+    });
     
-    console.log('New push subscription:', subscription.endpoint);
+    console.log('Push subscription saved:', endpoint);
     
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Push subscription error:', error);
     return NextResponse.json(
-      { error: 'Failed to subscribe' },
+      { error: 'Failed to subscribe', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

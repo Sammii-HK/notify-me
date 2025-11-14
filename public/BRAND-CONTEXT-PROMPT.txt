@@ -1,0 +1,50 @@
+I need to create brand context for my social media account. Please help me fill out the following fields:
+
+**Account Name:** [Your account name]
+**Account Type:** [Personal brand, Business, Creative portfolio, Service provider, etc.]
+**What I Do:** [Brief description]
+**My Target Audience:** [Who follows you or who you want to reach]
+**My Unique Style/Voice:** [How you want to sound]
+**My Values:** [What you stand for]
+**Content I Share:** [Types of posts you make]
+
+Please generate a complete brand context in JSON format with:
+
+1. **brandVoice** (object with: tone, personality, styleGuidelines)
+2. **targetAudience** (object with: demographics, interests, painPoints)
+3. **brandValues** (object with: coreValues, mission, usp)
+4. **contentGuidelines** (object with: dos, donts, hashtags)
+5. **examplePosts** (array of 3-5 example posts)
+
+Output ONLY valid JSON that I can copy-paste directly. Format it like this:
+
+{
+  "brandVoice": {
+    "tone": "...",
+    "personality": "...",
+    "styleGuidelines": "..."
+  },
+  "targetAudience": {
+    "demographics": "...",
+    "interests": "...",
+    "painPoints": "..."
+  },
+  "brandValues": {
+    "coreValues": "...",
+    "mission": "...",
+    "usp": "..."
+  },
+  "contentGuidelines": {
+    "dos": "...",
+    "donts": "...",
+    "hashtags": "..."
+  },
+  "examplePosts": [
+    "...",
+    "...",
+    "..."
+  ]
+}
+
+
+

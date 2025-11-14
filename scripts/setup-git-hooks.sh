@@ -18,3 +18,6 @@ echo "  - Run build to ensure everything compiles"
 echo ""
 echo "This prevents broken code from being pushed to the repository."
 
+
+
+
