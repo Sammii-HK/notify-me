@@ -5,7 +5,7 @@ import db from '@/lib/db';
  * GET /api/push/subscriptions
  * Get all push subscriptions (admin endpoint)
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const subscriptions = await (db as any).pushSubscription.findMany({

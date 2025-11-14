@@ -32,6 +32,7 @@ export default function AccountEditorClient({ accountId }: { accountId: string }
 
   useEffect(() => {
     loadAccount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountId]);
 
   async function loadAccount() {
@@ -224,7 +225,7 @@ export default function AccountEditorClient({ accountId }: { accountId: string }
                     setShowJsonPaste(false);
                     setJsonInput('');
                     alert('Brand context imported successfully!');
-                  } catch (err) {
+                  } catch {
                     alert('Invalid JSON. Please check the format.');
                   }
                 }}
@@ -294,7 +295,7 @@ export default function AccountEditorClient({ accountId }: { accountId: string }
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Brand Voice</h2>
           <p className="text-sm text-gray-600 mb-4">
-            Define the tone, personality, and style for this account (e.g., "Professional", "Casual", "Inspirational")
+            Define the tone, personality, and style for this account (e.g., &quot;Professional&quot;, &quot;Casual&quot;, &quot;Inspirational&quot;)
           </p>
           <div className="space-y-4">
             <div>
@@ -419,7 +420,7 @@ export default function AccountEditorClient({ accountId }: { accountId: string }
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Don'ts</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Don&apos;ts</label>
               <textarea
                 value={contentGuidelines.donts || ''}
                 onChange={(e) => updateContentGuidelines('donts', e.target.value)}

@@ -84,7 +84,7 @@ export default {
     }
   },
 
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, _env: Env, _ctx: ExecutionContext): Promise<Response> {
     // Health check endpoint
     if (request.method === 'GET') {
       return new Response(JSON.stringify({
