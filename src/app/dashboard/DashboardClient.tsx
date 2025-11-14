@@ -132,21 +132,65 @@ export default function DashboardClient() {
           </p>
         </div>
 
+        {/* Getting Started Guide */}
+        {accounts.length === 0 && (
+          <div className="mb-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">🚀 Getting Started</h2>
+            <div className="space-y-4 text-sm text-gray-700">
+              <div>
+                <h3 className="font-semibold mb-2">Step 1: Create Your First Account</h3>
+                <p className="mb-2">Run this command in your terminal:</p>
+                <code className="block bg-gray-800 text-green-400 p-3 rounded mb-2">npm run seed</code>
+                <p className="text-xs text-gray-600">This creates a sample account you can edit. Or create one via API.</p>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">Step 2: Set Up Your Brand Voice</h3>
+                <p className="mb-2">Once you have an account, click &quot;Edit Context&quot; to:</p>
+                <ul className="list-disc list-inside ml-2 space-y-1 text-xs">
+                  <li>Define your brand voice and tone</li>
+                  <li>Set your target audience</li>
+                  <li>Add content guidelines</li>
+                  <li>Include example posts</li>
+                </ul>
+                <p className="mt-2 text-xs text-gray-600">
+                  💡 <strong>Tip:</strong> Use ChatGPT/Claude to generate this quickly! See <code className="bg-gray-200 px-1 rounded">QUICK-CONTEXT-PROMPT.txt</code> for the prompt.
+                </p>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">Step 3: Generate Posts</h3>
+                <p className="text-xs">Click the &quot;Generate&quot; button on your account to create posts. Then review and approve them.</p>
+              </div>
+              <div className="pt-2 border-t border-blue-200">
+                <a 
+                  href="/HOW-TO-USE.md" 
+                  target="_blank"
+                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                >
+                  📖 Read the full guide →
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Accounts Section */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-900">Accounts / Personas</h2>
-            <button
-              onClick={() => window.location.href = '/api/accounts'}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-            >
-              View All (API)
-            </button>
+            {accounts.length > 0 && (
+              <button
+                onClick={() => window.location.href = '/api/accounts'}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+              >
+                View All (API)
+              </button>
+            )}
           </div>
 
           {accounts.length === 0 ? (
             <div className="bg-white rounded-lg shadow-sm p-6 text-center text-gray-500">
-              No accounts found. Create one via API or seed script.
+              <p className="mb-2">No accounts found.</p>
+              <p className="text-sm">Run <code className="bg-gray-100 px-2 py-1 rounded">npm run seed</code> to create a sample account.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
