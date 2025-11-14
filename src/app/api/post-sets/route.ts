@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     if (succulentUserId) {
       const { getAccountsForSucculentUser } = await import('@/lib/user-accounts');
       const accounts = await getAccountsForSucculentUser(db, succulentUserId);
-      const accountIds = accounts.map(a => a.id);
+      const accountIds = accounts.map((account: { id: string }) => account.id);
       if (accountIds.length > 0) {
         where.accountId = { in: accountIds };
       } else {

@@ -259,14 +259,14 @@ export async function enhanceBrandContextWithLearning(
 
     if (insights.patterns?.avoid && insights.patterns.avoid.length > 0) {
       enhancedContext += `\n\nPATTERNS TO AVOID (based on negative feedback):\n`;
-      insights.patterns.avoid.forEach((pattern, i) => {
+      insights.patterns.avoid.forEach((pattern) => {
         enhancedContext += `- ${pattern}\n`;
       });
     }
 
     if (insights.patterns?.emphasize && insights.patterns.emphasize.length > 0) {
       enhancedContext += `\n\nPATTERNS TO EMPHASIZE (based on positive feedback):\n`;
-      insights.patterns.emphasize.forEach((pattern, i) => {
+      insights.patterns.emphasize.forEach((pattern) => {
         enhancedContext += `- ${pattern}\n`;
       });
     }
