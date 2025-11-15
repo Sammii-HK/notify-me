@@ -9,9 +9,13 @@ import { notifyBoth } from '@/lib/notifications';
  * Accepts accountId in body or query params
  */
 export async function POST(request: NextRequest) {
+  console.log('[API /generate] Request received');
+  
   try {
     const body = await request.json().catch(() => ({}));
     const { accountId } = body;
+
+    console.log('[API /generate] Account ID:', accountId);
 
     if (!accountId) {
       return NextResponse.json({ error: 'accountId is required' }, { status: 400 });
@@ -56,10 +60,21 @@ export async function POST(request: NextRequest) {
       message: `Posts generated successfully for ${account.label}`
     });
   } catch (error) {
-    console.error('Manual generation error:', error);
+    console.error('[API /generate] Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    // Log full error details for debugging
+    console.error('[API /generate] Full error:', {
+      message: errorMessage,
+      stack: errorStack,
+      error
+    });
+    
     return NextResponse.json({
       error: 'Failed to generate posts',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      message: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? errorStack : undefined
     }, { status: 500 });
   }
 }

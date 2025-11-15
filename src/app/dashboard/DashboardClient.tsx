@@ -70,6 +70,8 @@ export default function DashboardClient() {
   async function generatePosts(accountId: string) {
     setGenerating(accountId);
     try {
+      console.log('[Dashboard] Calling /api/generate with accountId:', accountId);
+      
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
@@ -78,11 +80,15 @@ export default function DashboardClient() {
         body: JSON.stringify({ accountId }),
       });
 
+      console.log('[Dashboard] Response status:', response.status, response.statusText);
+
       if (response.ok) {
         const result = await response.json();
+        console.log('[Dashboard] Success:', result);
         alert(`✅ Posts generated! ${result.message || ''}\n\nReview URL: ${result.reviewUrl || 'N/A'}`);
         loadData(); // Refresh
       } else {
+        const status = response.status;
         let errorData;
         try {
           errorData = await response.json();
@@ -90,10 +96,11 @@ export default function DashboardClient() {
           const errorText = await response.text();
           errorData = { error: errorText };
         }
-        alert(`❌ Failed to generate posts: ${errorData.error || errorData.message || 'Unknown error'}`);
+        console.error('[Dashboard] Error response:', status, errorData);
+        alert(`❌ Failed to generate posts (${status}): ${errorData.error || errorData.message || 'Unknown error'}\n\nDetails: ${JSON.stringify(errorData, null, 2)}`);
       }
     } catch (error) {
-      console.error('Generation error:', error);
+      console.error('[Dashboard] Generation error:', error);
       alert(`❌ Failed to generate posts: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setGenerating(null);
